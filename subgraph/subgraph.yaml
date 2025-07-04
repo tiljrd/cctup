@@ -7,11 +7,10 @@ dataSources:
     network: mainnet
     source:
       package:
-        module: map_transactions
-        file: ../substreams/txs.spkg   # result of `substreams build`
+        moduleName: map_transactions
+        file: ../substreams/txs.spkg
     mapping:
+      kind: substreams/graph-entities
       apiVersion: 0.0.7
-      language: wasm/assemblyscript
       file: ./src/mapping.ts
-      entities:
-        - Transaction
+      handler: handleBlock
