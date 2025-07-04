@@ -15,3 +15,4 @@ hex = "0.4"
 
 [build-dependencies]
 substreams-ethereum = "0.9"
+prost-build = "0.12"
