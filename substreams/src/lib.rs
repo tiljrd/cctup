@@ -22,7 +22,7 @@ fn map_transactions(block: eth::Block) -> Result<TxRecords, Error> {
                 gas_price: transaction.gas_price.as_ref().map(|v| format!("0x{}", hex::encode(&v.bytes))).unwrap_or_default(),
                 max_fee_per_gas: transaction.max_fee_per_gas.as_ref().map(|v| format!("0x{}", hex::encode(&v.bytes))).unwrap_or_default(),
                 max_priority_fee_per_gas: transaction.max_priority_fee_per_gas.as_ref().map(|v| format!("0x{}", hex::encode(&v.bytes))).unwrap_or_default(),
-                access_list: serde_json::to_string(&transaction.access_list).unwrap_or_default(),
+                access_list: format!("0x{}", hex::encode(&transaction.access_list.iter().map(|_| 0u8).collect::<Vec<u8>>())),
                 data: transaction.input.clone(),
                 tx_type: transaction.r#type as u32,
             }),
