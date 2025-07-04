@@ -9,24 +9,22 @@ fn map_transactions(block: eth::Block) -> Result<TxRecords, Error> {
     let mut records = TxRecords::default();
 
     for transaction in block.transaction_traces.iter() {
-        let tx = &transaction.receipt.as_ref().unwrap().transaction;
-        
-        let kind = classify_transaction(tx, &transaction);
+        let kind = classify_transaction(&transaction);
         
         let record = TxRecord {
-            id: tx.hash.clone(),
+            id: transaction.hash.clone(),
             kind: kind.to_string(),
             raw: Some(Raw {
-                from: tx.from.clone(),
-                to: tx.to.clone(),
-                value: tx.value.clone(),
-                gas_limit: tx.gas_limit,
-                gas_price: tx.gas_price.clone(),
-                max_fee_per_gas: tx.max_fee_per_gas.clone(),
-                max_priority_fee_per_gas: tx.max_priority_fee_per_gas.clone(),
-                access_list: tx.access_list.clone(),
-                data: tx.input.clone(),
-                tx_type: tx.r#type as u32,
+                from: transaction.from.clone(),
+                to: transaction.to.clone(),
+                value: transaction.value.clone(),
+                gas_limit: transaction.gas_limit,
+                gas_price: transaction.gas_price.clone(),
+                max_fee_per_gas: transaction.max_fee_per_gas.clone(),
+                max_priority_fee_per_gas: transaction.max_priority_fee_per_gas.clone(),
+                access_list: transaction.access_list.clone(),
+                data: transaction.input.clone(),
+                tx_type: transaction.r#type as u32,
             }),
             decoded: None, // Will be populated by ABI fetcher later
         };
@@ -60,16 +58,16 @@ impl ToString for TransactionKind {
     }
 }
 
-fn classify_transaction(tx: &eth::Transaction, trace: &eth::TransactionTrace) -> TransactionKind {
-    if tx.to.is_empty() {
+fn classify_transaction(trace: &eth::TransactionTrace) -> TransactionKind {
+    if trace.to.is_empty() {
         return TransactionKind::ContractCreation;
     }
 
     let is_contract_target = trace.calls.len() > 0;
     
-    let has_data = !tx.input.is_empty();
+    let has_data = !trace.input.is_empty();
 
-    if let Ok(to_bytes) = hex::decode(&tx.to[2..]) {
+    if let Ok(to_bytes) = hex::decode(&trace.to[2..]) {
         if to_bytes.len() == 20 && to_bytes[0..19].iter().all(|&b| b == 0) && to_bytes[19] <= 9 && to_bytes[19] >= 1 {
             return TransactionKind::PrecompileCall;
         }
