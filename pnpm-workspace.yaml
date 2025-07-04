@@ -1,0 +1,4 @@
+packages:
+  - "substreams"
+  - "subgraph"
+  - "scripts"
