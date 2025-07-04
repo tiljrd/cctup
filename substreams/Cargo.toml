@@ -1,0 +1,17 @@
+[package]
+name = "cctup-substreams"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+substreams = "0.5"
+substreams-ethereum = "0.9"
+prost = "0.12"
+prost-types = "0.12"
+hex = "0.4"
+
+[build-dependencies]
+substreams-ethereum = "0.9"
