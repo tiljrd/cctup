@@ -1,0 +1,17 @@
+type Transaction @entity {
+  id: Bytes!        # tx hash
+  kind: String!     # enum as string
+  from: Bytes!
+  to: Bytes
+  value: BigInt!
+  gasLimit: BigInt!
+  gasPrice: BigInt
+  maxFeePerGas: BigInt
+  maxPriorityFeePerGas: BigInt
+  accessList: Bytes
+  data: Bytes
+  # optional decoded fields
+  fnSig: String
+  args: String      # JSON-encoded array
+  abiSource: String
+}
