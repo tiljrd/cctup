@@ -21,6 +21,7 @@
     "clean-hardhat": "cd src/ccip-starter-kit-hardhat && rm -rf node_modules artifacts cache typechain-types"
   },
   "dependencies": {
+    "@cct-ui/transaction-replayer": "file:../replayer",
     "@chainlink/ccip-js": "^0.2.1",
     "@chainlink/ccip-react-components": "^0.3.0",
     "@tanstack/react-query": "^5.37.1",
