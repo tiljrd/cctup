@@ -1,0 +1,19 @@
+defaultGasMultiplier: 1.15
+
+networks:
+  ethereum-mainnet:
+    chainId: 1
+    rpcUrl: ${MAINNET_RPC}
+    signer: envPrivateKey
+    keyEnv: MAINNET_PK
+  
+  arbitrum-one:
+    chainId: 42161
+    rpcUrl: ${ARB_RPC}
+    signer: walletConnect
+  
+  polygon-pos:
+    chainId: 137
+    rpcUrl: ${POLYGON_RPC}
+    signer: remoteSigner
+    remoteSignerUrl: https://reown.xyz/api/v1/sign
