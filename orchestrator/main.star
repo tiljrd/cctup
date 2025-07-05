@@ -170,8 +170,8 @@ def run(plan, args):
                 "  if curl -f http://graph-node:8020/ >/dev/null 2>&1; then " +
                 "    echo 'Graph node is ready!' && break; " +
                 "  fi; " +
-                "  echo 'Waiting for graph-node... attempt $i/30' && sleep 10; " +
-                "done && " +
+                "  echo \"Waiting for graph-node... attempt $i/30\" && sleep 10; " +
+                "done && "+
                 "npm run create-local && " +
                 "npm run deploy-local"
             ]
