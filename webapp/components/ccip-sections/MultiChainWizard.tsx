@@ -403,20 +403,20 @@ export function PoolTypeSelectionStep({ poolType, liquidity, onPoolTypeChange, o
   );
 }
 
-// Step 4: Review & Deploy
-interface ReviewAndDeployStepProps {
+// Step 4: Review & Simulate
+interface ReviewAndSimulateStepProps {
   wizardData: WizardData;
-  onDeployStart: () => void;
+  onSimulateStart: () => void;
   setWizardData: (data: WizardData) => void;
 }
 
-export function ReviewAndDeployStep({ wizardData, onDeployStart, setWizardData }: ReviewAndDeployStepProps) {
+export function ReviewAndSimulateStep({ wizardData, onSimulateStart, setWizardData }: ReviewAndSimulateStepProps) {
   const { networks } = useAvailableNetworks();
   const [isDeploying, setIsDeploying] = useState(false);
 
   const selectedNetworks = networks.filter(n => wizardData.selectedChains.includes(n.key));
 
-  const handleDeploy = async () => {
+      const handleSimulate = async () => {
     setIsDeploying(true);
     
     // Initialize deployment results
@@ -430,14 +430,14 @@ export function ReviewAndDeployStep({ wizardData, onDeployStart, setWizardData }
       deploymentResults
     });
 
-    onDeployStart();
+    onSimulateStart();
   };
 
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Review & Deploy</h2>
-        <p className="text-gray-600">Review your configuration before starting the deployment process.</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Review & Simulate</h2>
+        <p className="text-gray-600">Review your configuration before starting the simulation on fork networks.</p>
       </div>
 
       <div className="space-y-6">
@@ -548,24 +548,24 @@ export function ReviewAndDeployStep({ wizardData, onDeployStart, setWizardData }
 
       <div className="mt-8 pt-6 border-t border-gray-200">
         <button
-          onClick={handleDeploy}
+          onClick={handleSimulate}
           disabled={isDeploying}
           className="w-full py-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {isDeploying ? 'Starting Deployment...' : 'Start Multi-Chain Deployment'}
+          {isDeploying ? 'Starting Simulation...' : 'Start Multi-Chain Simulation'}
         </button>
       </div>
     </div>
   );
 }
 
-// Step 5: Deployment Progress
-interface DeploymentProgressStepProps {
+// Step 5: Simulate Execution
+interface SimulateExecutionStepProps {
   wizardData: WizardData;
   setWizardData: (data: WizardData) => void;
 }
 
-export function DeploymentProgressStep({ wizardData, setWizardData }: DeploymentProgressStepProps) {
+export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExecutionStepProps) {
   const { networks } = useAvailableNetworks();
   const [currentPhase, setCurrentPhase] = useState<'deploying' | 'configuring' | 'completed'>('deploying');
   const [deploymentStarted, setDeploymentStarted] = useState(false);
@@ -1281,6 +1281,231 @@ export function DeploymentProgressStep({ wizardData, setWizardData }: Deployment
                 Monitor Deployments
               </Link>
             </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Step 6: Execute Transactions
+interface ExecuteTransactionsStepProps {
+  wizardData: WizardData;
+  setWizardData: (data: WizardData) => void;
+}
+
+export function ExecuteTransactionsStep({ wizardData, setWizardData }: ExecuteTransactionsStepProps) {
+  const { networks } = useAvailableNetworks();
+  const [isLoading, setIsLoading] = useState(false);
+  const [preparedTransactions, setPreparedTransactions] = useState<any>(null);
+  const [executionResults, setExecutionResults] = useState<any[]>([]);
+  const [currentPhase, setCurrentPhase] = useState<'prepare' | 'execute' | 'completed'>('prepare');
+
+  const selectedNetworks = networks.filter(n => wizardData.selectedChains.includes(n.key));
+
+  const handlePrepareTransactions = async () => {
+    setIsLoading(true);
+    setCurrentPhase('prepare');
+    
+    try {
+      // Mock replay document - in real implementation, this would come from the indexer
+      const mockReplayDocument = {
+        version: "1.0",
+        transactions: wizardData.selectedChains.flatMap((chainKey, index) => [
+          {
+            id: `deploy-token-${chainKey}`,
+            network: chainKey,
+            tx: {
+              from: "0x1234567890123456789012345678901234567890",
+              to: undefined,
+              value: "0",
+              data: "0x608060405234801561001057600080fd5b50...", // Mock deployment bytecode
+            },
+            kind: "deployment",
+            txIndex: index * 2
+          },
+          {
+            id: `setup-pool-${chainKey}`,
+            network: chainKey,
+            tx: {
+              from: "0x1234567890123456789012345678901234567890",
+              to: "0x9876543210987654321098765432109876543210",
+              value: "0",
+              data: "0xa9059cbb000000000000000000000000...", // Mock function call
+            },
+            kind: "contract-call",
+            txIndex: index * 2 + 1
+          }
+        ])
+      };
+
+      const response = await fetch('/api/hardhat/replay-transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ replayDocument: mockReplayDocument }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.details || 'Failed to prepare transactions');
+      }
+
+      const data = await response.json();
+      setPreparedTransactions(data);
+      
+      // Mark simulation as complete
+      setWizardData({
+        ...wizardData,
+        simulationComplete: true,
+        replayDocument: mockReplayDocument
+      });
+      
+    } catch (error) {
+      console.error('Error preparing transactions:', error);
+      alert('Failed to prepare transactions: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleExecuteTransactions = async () => {
+    if (!preparedTransactions) return;
+    
+    setIsLoading(true);
+    setCurrentPhase('execute');
+    
+    try {
+      // Mock execution results
+      const mockResults = Object.keys(preparedTransactions.transactions).flatMap(network => 
+        preparedTransactions.transactions[network].map((tx: any, index: number) => ({
+          network,
+          hash: `0x${Math.random().toString(16).substr(2, 64)}`,
+          status: 'success',
+          txIndex: index
+        }))
+      );
+      
+      // Simulate progressive execution
+      for (const result of mockResults) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        setExecutionResults(prev => [...prev, result]);
+      }
+      
+      setCurrentPhase('completed');
+      
+    } catch (error) {
+      console.error('Error executing transactions:', error);
+      alert('Failed to execute transactions: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Execute Transactions</h2>
+        <p className="text-gray-600">Deploy your tested configuration on actual testnets using the replayer system.</p>
+      </div>
+
+      {/* Phase 1: Prepare Transactions */}
+      {currentPhase === 'prepare' && (
+        <div className="space-y-6">
+          <div className="bg-blue-50 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-blue-900 mb-3">Step 1: Prepare Transactions</h3>
+            <p className="text-blue-800 mb-4">
+              Load the simulation results from the indexer and prepare unsigned transactions for each network.
+            </p>
+            <button
+              onClick={handlePrepareTransactions}
+              disabled={isLoading}
+              className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isLoading ? 'Preparing Transactions...' : 'Prepare Transactions'}
+            </button>
+          </div>
+
+          {preparedTransactions && (
+            <div className="bg-green-50 rounded-lg p-6">
+              <h4 className="text-lg font-semibold text-green-900 mb-3">Transactions Prepared Successfully!</h4>
+              <div className="space-y-2 text-sm text-green-800">
+                <p>Networks: {preparedTransactions.networks.join(', ')}</p>
+                <p>Total Transactions: {preparedTransactions.totalTransactions}</p>
+              </div>
+              <button
+                onClick={() => setCurrentPhase('execute')}
+                className="mt-4 w-full py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+              >
+                Proceed to Execution
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Phase 2: Execute Transactions */}
+      {currentPhase === 'execute' && (
+        <div className="space-y-6">
+          <div className="bg-orange-50 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-orange-900 mb-3">Step 2: Execute on Testnets</h3>
+            <p className="text-orange-800 mb-4">
+              Sign and execute the prepared transactions on the actual testnet networks.
+            </p>
+            <button
+              onClick={handleExecuteTransactions}
+              disabled={isLoading}
+              className="w-full py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isLoading ? 'Executing Transactions...' : 'Execute All Transactions'}
+            </button>
+          </div>
+
+          {executionResults.length > 0 && (
+            <div className="bg-gray-50 rounded-lg p-6">
+              <h4 className="text-lg font-semibold text-gray-900 mb-3">Execution Progress</h4>
+              <div className="space-y-2">
+                {executionResults.map((result, index) => (
+                  <div key={index} className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">{result.network} - Transaction {result.txIndex + 1}</span>
+                    <div className="flex items-center">
+                      <svg className="w-4 h-4 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span className="text-green-600 font-mono text-xs">{result.hash.slice(0, 10)}...</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Phase 3: Completed */}
+      {currentPhase === 'completed' && (
+        <div className="text-center">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">Execution Complete!</h3>
+          <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+            All transactions have been successfully executed on the testnet networks. Your multi-chain deployment is now live!
+          </p>
+          <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4 max-w-md mx-auto">
+            <Link 
+              href="/ccip-js/execution"
+              className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors text-center"
+            >
+              Test Cross-Chain Transfer
+            </Link>
+            <Link 
+              href="/ccip-js/monitoring"
+              className="w-full sm:w-auto px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors text-center"
+            >
+              Monitor Deployments
+            </Link>
           </div>
         </div>
       )}

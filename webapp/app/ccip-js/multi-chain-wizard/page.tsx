@@ -8,8 +8,9 @@ import {
   ChainSelectionStep,
   TokenConfigurationStep,
   PoolTypeSelectionStep,
-  ReviewAndDeployStep,
-  DeploymentProgressStep
+  ReviewAndSimulateStep,
+  SimulateExecutionStep,
+  ExecuteTransactionsStep
 } from "@/components/ccip-sections/MultiChainWizard";
 
 export interface WizardData {
@@ -43,14 +44,17 @@ export interface WizardData {
   };
   configurationComplete: boolean;
   deploymentStarted: boolean; // Flag to prevent re-deployment
+  simulationComplete: boolean;
+  replayDocument?: any; // Generated from indexer after simulation
 }
 
 const WIZARD_STEPS = [
   { id: 'chains', title: 'Select Chains', description: 'Choose networks for deployment' },
   { id: 'token', title: 'Token Configuration', description: 'Configure token parameters' },
   { id: 'pool', title: 'Pool Type', description: 'Select pool type and options' },
-  { id: 'review', title: 'Review & Deploy', description: 'Review and confirm deployment' },
-  { id: 'deploy', title: 'Deployment', description: 'Deploy across all chains' },
+  { id: 'review', title: 'Review & Simulate', description: 'Review and simulate deployment' },
+  { id: 'simulate', title: 'Simulate Execution', description: 'Test deployment on fork networks' },
+  { id: 'execute', title: 'Execute Transactions', description: 'Deploy on actual testnets' },
 ];
 
 function MultiChainWizardContent() {
@@ -69,6 +73,7 @@ function MultiChainWizardContent() {
     deploymentResults: {},
     configurationComplete: false,
     deploymentStarted: false,
+    simulationComplete: false,
   });
 
   const getCurrentStepIndex = () => WIZARD_STEPS.findIndex(step => step.id === currentStep);
@@ -82,8 +87,10 @@ function MultiChainWizardContent() {
         return wizardData.poolType;
       case 'review':
         return true;
-      case 'deploy':
+      case 'simulate':
         return wizardData.configurationComplete;
+      case 'execute':
+        return wizardData.simulationComplete;
       default:
         return false;
     }
@@ -130,15 +137,22 @@ function MultiChainWizardContent() {
         );
       case 'review':
         return (
-          <ReviewAndDeployStep
+          <ReviewAndSimulateStep
             wizardData={wizardData}
-            onDeployStart={() => setCurrentStep('deploy')}
+            onSimulateStart={() => setCurrentStep('simulate')}
             setWizardData={setWizardData}
           />
         );
-      case 'deploy':
+      case 'simulate':
         return (
-          <DeploymentProgressStep
+          <SimulateExecutionStep
+            wizardData={wizardData}
+            setWizardData={setWizardData}
+          />
+        );
+      case 'execute':
+        return (
+          <ExecuteTransactionsStep
             wizardData={wizardData}
             setWizardData={setWizardData}
           />
@@ -362,7 +376,7 @@ function MultiChainWizardContent() {
         </div>
 
         {/* Navigation */}
-        {currentStep !== 'deploy' && (
+        {currentStep !== 'execute' && (
           <div className="flex flex-col sm:flex-row justify-between gap-4 sm:gap-0 px-4 sm:px-0">
             <button
               onClick={handleBack}
@@ -376,7 +390,7 @@ function MultiChainWizardContent() {
               disabled={!canGoNext()}
               className="order-1 sm:order-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {currentStep === 'review' ? 'Start Deployment' : 'Next'}
+              {currentStep === 'review' ? 'Start Simulation' : currentStep === 'simulate' ? 'Execute Transactions' : 'Next'}
             </button>
           </div>
         )}
