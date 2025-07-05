@@ -167,7 +167,7 @@ def run(plan, args):
                 "sed -i 's|http://localhost:5001|http://ipfs:5001|g' package.json && " +
                 "echo 'Waiting for graph-node to be ready...' && " +
                 "for i in $(seq 1 30); do " +
-                "  if curl -f http://graph-node:8020/ >/dev/null 2>&1; then " +
+                "  if curl -X POST -H 'Content-Type: application/json' -d '{\"jsonrpc\":\"2.0\",\"method\":\"subgraph_create\",\"params\":{\"name\":\"test\"},\"id\":1}' http://graph-node:8020/ >/dev/null 2>&1; then " +
                 "    echo 'Graph node is ready!' && break; " +
                 "  fi; " +
                 "  echo \"Waiting for graph-node... attempt $i/30\" && sleep 10; " +
