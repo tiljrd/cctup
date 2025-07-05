@@ -1,0 +1,11 @@
+start:
+  args:
+    - reader-node
+    - merger
+    - relayer
+    - firehose
+  flags:
+    reader-node-path: "/usr/local/bin/fireeth"
+    reader-node-arguments: "tools poller generic-evm http://host.docker.internal:56127 0 --interval-between-fetch=0s"
+    common-first-streamable-block: 0
+    common-live-blocks-addr: "localhost:10015"
