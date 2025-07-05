@@ -108,7 +108,7 @@ def run(plan, args):
                 "HARDHAT_PRIVATE_KEY": args["deployer_private_key"]
             },
             ports={
-                "http": PortSpec(number=3000, transport_protocol="TCP", wait="1m")
+                "http": PortSpec(number=3001, transport_protocol="TCP", wait="1m")
             },
             files = {
                 "/public": tomls_art
