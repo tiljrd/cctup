@@ -94,8 +94,7 @@ def run(plan, args):
             substreams_grpc = "http://{}:9000".format(firehose_service.ip_address),
             substreams_token = "",
             firehose_grpc = "http://{}:10015".format(firehose_service.ip_address),
-            firehose_token = "",
-            rpc = rpc_url,
+            firehose_token = ""
         )
     ]
 
@@ -111,7 +110,6 @@ def run(plan, args):
 
     chain_names = [n.name for n in networks]
     disable_check_list = ",".join(chain_names)
-
     graph_output = plan.add_service(
         name="graph-node",
         config=ServiceConfig(

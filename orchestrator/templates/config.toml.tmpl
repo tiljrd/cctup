@@ -13,8 +13,7 @@ protocol = "ethereum"
 
 provider = [
   { label = "substreams-{{ .name }}", details = { type = "substreams", url = "{{ .substreams_grpc }}", token = "{{ .substreams_token }}", features = [] } },
-  { label = "firehose-{{ .name }}", details = { type = "firehose", url = "{{ .firehose_grpc }}", token = "{{ .firehose_token }}", features = ["compression"] } },
-  { label = "web3call-{{ .name }}", details = { type = "web3call", transport = "rpc", url = "{{ .rpc }}", features = [] } }
+  { label = "firehose-{{ .name }}", details = { type = "firehose", url = "{{ .firehose_grpc }}", token = "{{ .firehose_token }}", features = ["compression"] } }
 ]
 {{- end }}
 
