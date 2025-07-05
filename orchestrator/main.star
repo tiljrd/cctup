@@ -178,4 +178,3 @@ def run(plan, args):
         graph_endpoint=graph_node_url,
         indexer=indexer_service
     )
-    )
