@@ -6,7 +6,7 @@
   "scripts": {
     "fetch-abi": "tsx fetchAbi.ts",
     "build": "tsc",
-    "lint": "eslint ."
+    "lint": "eslint *.ts"
   },
   "dependencies": {
     "ethers": "^6.0.0",
