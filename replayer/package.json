@@ -1,34 +1,50 @@
 {
-  "name": "replayer",
+  "name": "@cct-up/transaction-replayer",
   "version": "0.1.0",
   "description": "Multi-chain transaction replayer with pluggable signers",
   "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
   "type": "module",
-  "scripts": {
-    "build": "tsc",
-    "dev": "tsx src/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "eslint src --ext .ts"
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
   },
-  "keywords": ["ethereum", "blockchain", "transaction", "replay", "viem"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsx src/cli.ts",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint src --ext .ts",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "blockchain",
+    "ethereum",
+    "transactions",
+    "replayer",
+    "multi-chain"
+  ],
   "author": "",
-  "license": "MIT",
-  "packageManager": "pnpm@10.12.4",
+  "license": "ISC",
   "dependencies": {
-    "viem": "^2.0.0",
-    "yaml": "^2.3.4",
-    "dotenv": "^16.3.1"
+    "js-yaml": "^4.1.0",
+    "viem": "^2.21.51"
   },
   "devDependencies": {
-    "typescript": "^5.0.0",
-    "tsx": "^4.0.0",
-    "@types/node": "^20.0.0",
-    "eslint": "^8.0.0",
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0"
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.10.2",
+    "eslint": "^8.57.1",
+    "tsup": "^8.0.0",
+    "tsx": "^4.19.2"
   },
-  "engines": {
-    "node": ">=18.0.0",
-    "pnpm": ">=8.0.0"
+  "peerDependencies": {
+    "viem": ">=2.0.0"
   }
 }
