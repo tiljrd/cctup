@@ -95,6 +95,7 @@ def run(plan, args):
             substreams_token = "",
             firehose_grpc = "http://{}:10015".format(firehose_service.ip_address),
             firehose_token = "",
+            rpc = rpc_url,
         )
     ]
 
