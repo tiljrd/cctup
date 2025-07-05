@@ -41,6 +41,30 @@ function DeploymentContent() {
         {/* Content Grid */}
         <div className="space-y-8">
 
+          {/* Multi-Chain Wizard Banner */}
+          <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold mb-2">🚀 New: Multi-Chain Deployment Wizard</h3>
+                <p className="text-blue-100 mb-4">Deploy tokens and pools across multiple chains in one unified flow - similar to the Chainlink Token Manager</p>
+                <Link 
+                  href="/ccip-js/multi-chain-wizard"
+                  className="inline-flex items-center px-4 py-2 bg-white text-blue-600 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+                >
+                  Try Multi-Chain Wizard
+                  <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </Link>
+              </div>
+              <div className="hidden md:block">
+                <svg className="w-16 h-16 text-white opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
           {/* Deployment Components */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
             {/* Deploy Token */}

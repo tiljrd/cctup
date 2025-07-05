@@ -245,14 +245,16 @@ export function DeployToken() {
               )}
             </div>
           ) : (
-            <div className="text-red-600">
-              <p className="font-semibold">❌ Error:</p>
-              <p className="mt-1">{result.error}</p>
-              {result.stderr && (
-                <pre className="text-xs mt-2 bg-red-50 p-2 rounded overflow-auto max-h-32">
-                  {result.stderr}
-                </pre>
-              )}
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-start">
+                <svg className="w-5 h-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="flex-1">
+                  <h4 className="font-medium text-red-800 mb-1">Token Deployment Failed</h4>
+                  <p className="text-red-700">{result.error}</p>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -349,14 +351,16 @@ export function SetupBurnMintPool() {
               )}
             </div>
           ) : (
-            <div className="text-red-600">
-              <p className="font-semibold">❌ Error:</p>
-              <p className="mt-1">{result.error}</p>
-              {result.stderr && (
-                <pre className="text-xs mt-2 bg-red-50 p-2 rounded overflow-auto max-h-32">
-                  {result.stderr}
-                </pre>
-              )}
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-start">
+                <svg className="w-5 h-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="flex-1">
+                  <h4 className="font-medium text-red-800 mb-1">Pool Setup Failed</h4>
+                  <p className="text-red-700">{result.error}</p>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -463,14 +467,16 @@ export function SetupLockReleasePool() {
               )}
             </div>
           ) : (
-            <div className="text-red-600">
-              <p className="font-semibold">❌ Error:</p>
-              <p className="mt-1">{result.error}</p>
-              {result.stderr && (
-                <pre className="text-xs mt-2 bg-red-50 p-2 rounded overflow-auto max-h-32">
-                  {result.stderr}
-                </pre>
-              )}
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-start">
+                <svg className="w-5 h-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="flex-1">
+                  <h4 className="font-medium text-red-800 mb-1">Pool Setup Failed</h4>
+                  <p className="text-red-700">{result.error}</p>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -609,14 +615,16 @@ export function ConfigurePool() {
               <p className="mt-1 text-sm">Pool has been configured for cross-chain communication.</p>
             </div>
           ) : (
-            <div className="text-red-600">
-              <p className="font-semibold">❌ Error:</p>
-              <p className="mt-1">{result.error}</p>
-              {result.stderr && (
-                <pre className="text-xs mt-2 bg-red-50 p-2 rounded overflow-auto max-h-32">
-                  {result.stderr}
-                </pre>
-              )}
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-start">
+                <svg className="w-5 h-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="flex-1">
+                  <h4 className="font-medium text-red-800 mb-1">Configuration Failed</h4>
+                  <p className="text-red-700">{result.error}</p>
+                </div>
+              </div>
             </div>
           )}
         </div>
