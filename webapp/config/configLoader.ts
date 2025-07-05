@@ -1,40 +1,7 @@
-import yaml from 'js-yaml';
 import { Chain, defineChain } from 'viem';
 import * as viemChains from 'viem/chains';
 import { AddressMap, NetworkConfig, Token } from '@chainlink/ccip-react-components';
-
-interface YamlNetwork {
-  id: number;
-  key: string;
-  name: string;
-  nativeCurrency: {
-    name: string;
-    symbol: string;
-    decimals: number;
-  };
-  rpcUrls: string[];
-  blockExplorer: {
-    name: string;
-    url: string;
-  };
-  logoURL: string;
-  testnet: boolean;
-  chainSelector: string;
-  linkContract: string;
-  routerAddress: string;
-}
-
-interface YamlToken {
-  symbol: string;
-  logoURL: string;
-  tags: string[];
-  addresses: Record<string, string>;
-}
-
-interface YamlConfig {
-  networks: YamlNetwork[];
-  tokens: YamlToken[];
-}
+import { loadAllNetworks, loadTokens, YamlNetwork, YamlToken } from './unifiedConfigLoader';
 
 // Cache for loaded configuration
 let cachedConfig: { networkConfig: NetworkConfig; chains: Chain[]; chainMap: Map<number, Chain> } | null = null;
@@ -50,17 +17,9 @@ export async function loadNetworkConfig(): Promise<{
   }
 
   try {
-    // Determine the config file path
-    const configPath = process.env.NEXT_PUBLIC_CCIP_CONFIG_FILE || '/network-config.yaml';
-    
-    // Fetch the YAML file from the public directory
-    const response = await fetch(configPath);
-    if (!response.ok) {
-      throw new Error(`Failed to load config from ${configPath}: ${response.statusText}`);
-    }
-    
-    const yamlContent = await response.text();
-    const config = yaml.load(yamlContent) as YamlConfig;
+    // Load networks and tokens using unified loader
+    const allNetworks = await loadAllNetworks();
+    const tokens = await loadTokens();
 
     // Create chain map and chains array
     const chainMap = new Map<number, Chain>();
@@ -69,8 +28,8 @@ export async function loadNetworkConfig(): Promise<{
     const routerAddresses: AddressMap = {};
     const chainSelectors: Record<number, string> = {};
 
-    // Process networks
-    for (const network of config.networks) {
+    // Process all networks (bloctopusNetworks + existingNetworks)
+    for (const network of allNetworks) {
       // Check if chain exists in viem/chains
       const existingChain = Object.values(viemChains).find(
         (chain) => chain.id === network.id
@@ -120,12 +79,12 @@ export async function loadNetworkConfig(): Promise<{
     }
 
     // Process tokens
-    const tokensList: Token[] = config.tokens.map((token) => {
+    const tokensList: Token[] = tokens.map((token) => {
       const addressMap: AddressMap = {};
       
       // Convert string keys to chain IDs
       for (const [networkKey, address] of Object.entries(token.addresses)) {
-        const network = config.networks.find((n) => n.key === networkKey);
+        const network = allNetworks.find((n) => n.key === networkKey);
         if (network && address) {
           addressMap[network.id] = address as `0x${string}`;
         }

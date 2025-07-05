@@ -149,10 +149,6 @@ jspm_packages/
 *.tsbuildinfo
 webapp/next-env.d.ts
 
-# config files in public
-webapp/public/chains.yaml
-webapp/public/*.yaml
-
 # Hardhat
 **/artifacts/
 **/cache/
