@@ -194,7 +194,7 @@ docker run --rm -d --name firehose-rpc -p 13042:13042 \
   ghcr.io/streamingfast/firehose-ethereum:40d5054 \
   start firehose \
   --substreams-enabled \
-  --substreams-rpc-endpoints="https://eth-mainnet.g.alchemy.com/v2/lC2HDPB2Vs7-p-UPkgKD-VqFulU5elyk" \
+  --substreams-rpc-endpoints="https://eth-mainnet.g.alchemy.com/v2/YOUR_API_KEY" \
   --firehose-grpc-listen-addr=":13042" \
   --common-first-streamable-block=19000000 \
   --common-chain-id=1 \
