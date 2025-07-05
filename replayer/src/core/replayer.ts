@@ -37,6 +37,17 @@ export class Replayer {
     );
   }
 
+  async prepareTransactions(document: ReplayDocument): Promise<Record<string, SerializedTransaction[]>> {
+    const queues = this.organizeTransactionsByNetwork(document.transactions);
+    const preparedTransactions: Record<string, SerializedTransaction[]> = {};
+
+    for (const [networkName, transactions] of Object.entries(queues)) {
+      preparedTransactions[networkName] = await this.prepareNetworkTransactions(networkName, transactions);
+    }
+
+    return preparedTransactions;
+  }
+
   private organizeTransactionsByNetwork(transactions: TransactionRecord[]): Record<string, TransactionRecord[]> {
     const queues: Record<string, TransactionRecord[]> = {};
 
@@ -61,6 +72,36 @@ export class Replayer {
 
   private extractNonce(tx: TransactionRecord): number {
     return tx.txIndex || 0;
+  }
+
+  private async prepareNetworkTransactions(networkName: string, transactions: TransactionRecord[]): Promise<SerializedTransaction[]> {
+    const networkConfig = this.config.networks[networkName];
+    if (!networkConfig) {
+      throw new Error(`Network configuration not found for ${networkName}`);
+    }
+
+    const client = this.publicClients[networkName];
+    const nonceCache = new Map<string, number>();
+    const preparedTxs: SerializedTransaction[] = [];
+
+    for (const txRecord of transactions) {
+      try {
+        const nonce = await this.getNonce(client, txRecord.tx.from, nonceCache);
+        
+        let tx = buildUnsignedTransaction(txRecord, networkConfig.chainId, nonce);
+        
+        tx = await this.enhanceTransactionWithFees(client, tx);
+        
+        preparedTxs.push(tx);
+        
+        nonceCache.set(txRecord.tx.from, nonce + 1);
+      } catch (error) {
+        console.error(`[${networkName}] Failed to prepare transaction ${txRecord.id}:`, error);
+        throw error;
+      }
+    }
+
+    return preparedTxs;
   }
 
   private async replayNetworkTransactions(networkName: string, transactions: TransactionRecord[]): Promise<void> {

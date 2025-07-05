@@ -1,0 +1,47 @@
+{
+  "name": "example-nextjs",
+  "version": "0.1.1",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "bdev": "pnpm run build-components && next dev",
+    "dev": "next dev",
+    "build-ccip-js": "pnpm --filter ccip-js run build",
+    "build-components": "pnpm --filter ccip-react-components run build",
+    
+    "prepare-hardhat": "cd src/ccip-starter-kit-hardhat && npm install",
+    "build-hardhat": "cd src/ccip-starter-kit-hardhat && npx hardhat compile",
+    "prebuild": "pnpm run prepare-hardhat && pnpm run build-hardhat",
+    
+    "build": "pnpm build-ccip-js && pnpm build-components && next build",
+    "start": "next start",
+    "lint": "next lint",
+    
+    "dev-with-hardhat": "pnpm run prepare-hardhat && pnpm run build-hardhat && pnpm run dev",
+    "clean-hardhat": "cd src/ccip-starter-kit-hardhat && rm -rf node_modules artifacts cache typechain-types"
+  },
+  "dependencies": {
+    "@cct-ui/transaction-replayer": "file:../replayer",
+    "@chainlink/ccip-js": "^0.2.1",
+    "@chainlink/ccip-react-components": "^0.3.0",
+    "@tanstack/react-query": "^5.37.1",
+    "@types/js-yaml": "^4.0.9",
+    "commander": "^14.0.0",
+    "js-yaml": "^4.1.0",
+    "next": "14.2.3",
+    "react": "18",
+    "react-dom": "18",
+    "typescript": "^5",
+    "viem": "2.21.25",
+    "wagmi": "2.12.7"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.3",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1"
+  }
+}
