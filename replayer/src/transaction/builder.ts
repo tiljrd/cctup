@@ -1,5 +1,5 @@
 import { encodeFunctionData, type Hex } from 'viem';
-import type { TransactionRecord, UnsignedTransaction } from '../types/config.js';
+import type { TransactionRecord } from '../types/config.js';
 
 export interface SerializedTransaction {
   chainId: number;
