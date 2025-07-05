@@ -158,6 +158,8 @@ echo $ETHERSCAN_KEY  # Should output your API key
 
 ### Running the Substreams
 
+#### Option 1: Using StreamingFast Endpoints
+
 ```bash
 cd substreams
 
@@ -167,6 +169,89 @@ substreams run map_transactions -e mainnet.eth.streamingfast.io:443
 # Run with specific block range
 substreams run map_transactions -s 18000000 -t 18000100
 ```
+
+#### Option 2: Using Firehose with RPC Polling
+
+For environments where you don't have access to StreamingFast endpoints or want to use your own RPC provider, you can run firehose in RPC polling mode. This approach uses external RPC endpoints instead of running a full instrumented Ethereum node.
+
+##### Prerequisites for Firehose RPC Polling
+
+- Docker installed and running
+- Access to an Ethereum RPC endpoint (Alchemy, Infura, etc.)
+
+##### Setup Firehose with RPC Polling
+
+1. **Pull the Firehose Docker Image**:
+```bash
+cd substreams
+docker pull ghcr.io/streamingfast/firehose-ethereum:40d5054
+```
+
+2. **Start Firehose with RPC Polling**:
+```bash
+# Start firehose container with RPC polling configuration
+docker run --rm -d --name firehose-rpc -p 13042:13042 \
+  ghcr.io/streamingfast/firehose-ethereum:40d5054 \
+  start firehose \
+  --substreams-enabled \
+  --substreams-rpc-endpoints="https://eth-mainnet.g.alchemy.com/v2/lC2HDPB2Vs7-p-UPkgKD-VqFulU5elyk" \
+  --firehose-grpc-listen-addr=":13042" \
+  --common-first-streamable-block=19000000 \
+  --common-chain-id=1 \
+  --common-network-id=1
+```
+
+3. **Run Substreams Against Local Firehose**:
+```bash
+# Run your substream against the local firehose instance
+substreams run map_transactions -e localhost:13042 --plaintext
+
+# Run with specific block range
+substreams run map_transactions -e localhost:13042 --plaintext -s 19000000 -t 19000100
+```
+
+4. **Stop Firehose Container** (when done):
+```bash
+docker stop firehose-rpc
+```
+
+##### Configuration Options
+
+The firehose configuration supports several important parameters:
+
+- `--substreams-rpc-endpoints`: The RPC endpoint URL for blockchain data
+- `--common-first-streamable-block`: Starting block number (set to recent block for faster startup)
+- `--common-chain-id`: Ethereum chain ID (1 for mainnet)
+- `--common-network-id`: Ethereum network ID (1 for mainnet)
+- `--firehose-grpc-listen-addr`: Address where firehose listens for gRPC connections
+
+##### Using Custom RPC Endpoints
+
+To use a different RPC provider, replace the `--substreams-rpc-endpoints` value:
+
+```bash
+# Example with Infura
+--substreams-rpc-endpoints="https://mainnet.infura.io/v3/YOUR_PROJECT_ID"
+
+# Example with local node
+--substreams-rpc-endpoints="http://localhost:8545"
+```
+
+##### Troubleshooting Firehose RPC Polling
+
+**Container fails to start**:
+- Check if port 13042 is already in use: `docker ps | grep 13042`
+- Verify Docker is running: `docker version`
+
+**RPC connection issues**:
+- Verify the RPC endpoint is accessible: `curl -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' YOUR_RPC_ENDPOINT`
+- Check rate limits on your RPC provider
+- Ensure the RPC endpoint supports the required methods
+
+**Substreams connection fails**:
+- Verify firehose is running: `docker logs firehose-rpc`
+- Check that port 13042 is accessible: `telnet localhost 13042`
+- Ensure you're using `--plaintext` flag when connecting to local firehose
 
 ### Querying the Subgraph
 
