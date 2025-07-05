@@ -1,0 +1,13 @@
+ethereum_args:
+  participants:
+    - el_type: reth
+      el_image: tiljordan/reth-forking:1.0.0
+      el_extra_env_vars:
+        FORKING_RPC_URL: https://eth-mainnet.g.alchemy.com/v2/lC2HDPB2Vs7-p-UPkgKD-VqFulU5elyk
+        FORKING_BLOCK_HEIGHT: "latest"
+      cl_type: lighthouse
+  network_params:
+    prefunded_accounts: '{"0xe1A74e1FCB254CB1e5eb1245eaAe034A4D7dD538": {"balance": "1000000000ETH"}}'
+    seconds_per_slot: 4
+  faucet_params:
+    private_key: 1cdf65ac75f477650040ebe272ddaffb6735dcf55bd651869963ada71944e6db

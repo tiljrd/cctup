@@ -1,0 +1,14 @@
+start:
+  args:
+    - reader-node
+    - merger
+    - relayer
+    - firehose
+    - substreams-tier1
+  flags:
+    reader-node-path: "/usr/local/bin/fireeth"
+    reader-node-arguments: "tools poller generic-evm {{.rpc_url}} 1 --interval-between-fetch=0s"
+    common-first-streamable-block: 1
+    common-live-blocks-addr: "localhost:10015"
+    advertise-chain-name: "eth-local"
+    ignore-advertise-validation: true

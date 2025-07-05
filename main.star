@@ -45,23 +45,30 @@ def run(plan, args):
                 "/tmp/config/": firehose_config
             },
             entrypoint=[],
-            cmd=["start", "-c", "/tmp/config/firehose.yaml", "--advertise-block-features=base", "--substreams-tier1-grpc-listen-addr", ":9000"]
+            cmd=["start", "-c", "/tmp/config/firehose.yaml", "--advertise-block-features=base", "--substreams-tier1-grpc-listen-addr", ":9000", "--substreams-tier1-block-type", "sf.ethereum.type.v2.Block", "--substreams-state-bundle-size", "10", "-vvvv"]
         )
     )
 
     plan.print("Starting substream container")
     firehose_grpc_url = "{}:9000".format(firehose_service.ip_address)
+
+    # Upload substream directory
+    substream_dir = plan.upload_files(
+        src ="indexer/substreams",
+        name = "substreams",
+        description = "Uploading substreams"
+    )
     
     substream_service = plan.add_service(
         name="substream",
         config=ServiceConfig(
-            image="alpine:latest",
+            image="ghcr.io/streamingfast/substreams-starter:v0.1.4",
+            files={
+                "/app/": substream_dir
+            },
             cmd=[
-                "/bin/sh", "-c", "echo 'Substream service placeholder - would run: substreams run map_transactions -e {}' && sleep infinity".format(firehose_grpc_url)
+                "/bin/sh", "-c", "cd /app && substreams run map_transactions -e {} --plaintext && sleep infinity".format(firehose_grpc_url)
             ],
-            env_vars={
-                "SUBSTREAMS_ENDPOINT": firehose_grpc_url
-            }
         )
     )
 
