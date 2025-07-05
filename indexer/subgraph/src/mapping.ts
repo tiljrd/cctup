@@ -1,4 +1,4 @@
-import { TxRecords } from "../generated/TxStream/TxStream";
+import { TxRecords } from "./types/TxStream";
 import { Transaction } from "../generated/schema";
 import { Bytes, BigInt } from "@graphprotocol/graph-ts";
 
@@ -10,8 +10,8 @@ export function handleBlock(params: TxRecords): void {
     tx.kind = rec.kind.toString();
     tx.from = rec.raw!.from as Bytes;
     tx.to = rec.raw!.to as Bytes | null;
-    tx.value = rec.raw!.value as BigInt;
-    tx.gasLimit = BigInt.fromI32(rec.raw!.gas_limit);
+    tx.value = BigInt.fromString(rec.raw!.value);
+    tx.gasLimit = BigInt.fromString(rec.raw!.gas_limit);
     tx.gasPrice = rec.raw!.gas_price ? BigInt.fromString(rec.raw!.gas_price) : null;
     tx.maxFeePerGas = rec.raw!.max_fee_per_gas ? BigInt.fromString(rec.raw!.max_fee_per_gas) : null;
     tx.maxPriorityFeePerGas = rec.raw!.max_priority_fee_per_gas
