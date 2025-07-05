@@ -203,6 +203,14 @@ function parseHardhatError(errorMessage: string, networkKey: string): string {
     return `Invalid private key or account configuration. Please check your wallet settings.`;
   }
   
+  // Hedera-specific "Sender account not found" error
+  if (lowerError.includes('sender account not found')) {
+    if (networkKey.toLowerCase().includes('hedera')) {
+      return `Account not found on ${networkKey} network. Your account needs to be funded with HBAR tokens to exist on the Hedera network. Please get testnet HBAR from the Hedera faucet: https://portal.hedera.com/faucet`;
+    }
+    return `Account not found on ${networkKey} network. Please fund your account with native tokens to create it on the network.`;
+  }
+  
   // Network not found
   if (lowerError.includes('unknown network') || lowerError.includes('network not found')) {
     return `Network "${networkKey}" is not configured. Please check your network configuration.`;
@@ -229,6 +237,26 @@ function parseHardhatError(errorMessage: string, networkKey: string): string {
   
   // For unknown errors, try to extract the most relevant part
   const lines = errorMessage.split('\n');
+  
+  // First, try to find a ProviderError with a specific message
+  const providerErrorLine = lines.find(line => line.includes('ProviderError:'));
+  if (providerErrorLine) {
+    // Extract the message after "execution reverted:" if present
+    const revertMatch = providerErrorLine.match(/execution reverted:\s*(.+?)(?:\s*at|$)/);
+    if (revertMatch) {
+      const revertReason = revertMatch[1].trim();
+             // Check if this is a known error pattern
+       if (revertReason.toLowerCase().includes('sender account not found')) {
+         if (networkKey.toLowerCase().includes('hedera')) {
+           return `Account not found on ${networkKey} network. Your account needs to be funded with HBAR tokens to exist on the Hedera network. Please get testnet HBAR from the Hedera faucet: https://portal.hedera.com/faucet`;
+         }
+         return `Account not found on ${networkKey} network. Please fund your account with native tokens to create it on the network.`;
+       }
+      return `Contract execution failed: ${revertReason}`;
+    }
+  }
+  
+  // Then try other error patterns
   const relevantLine = lines.find(line => 
     line.includes('Error:') || 
     line.includes('ProviderError:') || 
