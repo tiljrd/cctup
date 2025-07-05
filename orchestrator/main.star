@@ -51,23 +51,13 @@ def run(plan, args):
 
     plan.print("Starting substream container")
     firehose_grpc_url = "{}:9000".format(firehose_service.ip_address)
-
-    # Upload substream directory
-    substream_dir = plan.upload_files(
-        src ="indexer/substreams",
-        name = "substreams",
-        description = "Uploading substreams"
-    )
     
     substream_service = plan.add_service(
         name="substream",
         config=ServiceConfig(
-            image="ghcr.io/streamingfast/substreams-starter:v0.1.4",
-            files={
-                "/app/": substream_dir
-            },
+            image="tiljordan/substreams:1.0.0",
             cmd=[
-                "/bin/sh", "-c", "cd /app && substreams run map_transactions -e {} --plaintext && sleep infinity".format(firehose_grpc_url)
+                "/bin/sh", "-c", "substreams run map_transactions -e {} --plaintext && sleep infinity".format(firehose_grpc_url)
             ],
         )
     )
