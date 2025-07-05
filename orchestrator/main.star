@@ -157,12 +157,14 @@ def run(plan, args):
         config=ServiceConfig(
             image="tiljordan/cctup-indexer:1.0.0",
             env_vars={
-                "GRAPH_NODE_URL": graph_node_url,
-                "IPFS_URL": "http://{}:5001".format(graph_services.ipfs.ip_address)
+                "GRAPH_NODE_URL": "http://graph-node:8020",
+                "IPFS_URL": "http://ipfs:5001"
             },
             cmd=[
                 "sh", "-c", 
                 "cd /app/subgraph && " +
+                "sed -i 's|http://localhost:8020/|http://graph-node:8020/|g' package.json && " +
+                "sed -i 's|http://localhost:5001|http://ipfs:5001|g' package.json && " +
                 "npm run create-local && " +
                 "npm run deploy-local"
             ]
