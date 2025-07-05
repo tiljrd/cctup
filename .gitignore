@@ -95,6 +95,34 @@ replay_pid*
 # Logs
 logs
 *.log
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+webapp/node_modules
+webapp/package-lock.json
+webapp/yarn.lock
+webapp/pnpm-lock.yaml
+webapp/pnpm-workspace.yaml
+webapp/pnpm-workspace.yaml
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# testing
+webapp/coverage
+
+# next.js
+webapp/.next/
+webapp/out/
+
+# production
+webapp/build
+
+# misc
+.DS_Store
+webapp/*.pem
+
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -119,207 +147,19 @@ jspm_packages/
 
 # TypeScript cache
 *.tsbuildinfo
+webapp/next-env.d.ts
 
-# Optional npm cache directory
-.npm
+# config files in public
+webapp/public/chains.yaml
+webapp/public/*.yaml
 
-# Optional eslint cache
-.eslintcache
+# Hardhat
+**/artifacts/
+**/cache/
+**/typechain-types/
+webapp/src/ccip-starter-kit-hardhat/artifacts/
+webapp/src/ccip-starter-kit-hardhat/cache/
 
-# Optional stylelint cache
-.stylelintcache
-
-# Microbundle cache
-.rpt2_cache/
-.rts2_cache_cjs/
-.rts2_cache_es/
-.rts2_cache_umd/
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# Next.js build output
-.next
-
-# Nuxt.js build / generate output
-.nuxt
-dist
-
-# Storybook build outputs
-.out
-.storybook-out
-storybook-static
-
-# Temporary folders
-tmp/
-temp/
-
-# Editor directories and files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Backup files
-*.bak
-*.backup
-*.tmp
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Compiled binary addons (https://nodejs.org/api/addons.html)
-build/Release
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# dotenv environment variables file
-.env
-.env.test
-.env.production
-
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# Next.js build output
-.next
-out
-
-# Nuxt.js build / generate output
-.nuxt
-dist
-
-# Gatsby files
-.cache/
-public
-
-# Storybook build outputs
-.out
-.storybook-out
-
-# Temporary folders
-tmp/
-temp/
-
-# Rust specific
-target/
-**/*.rs.bk
-*.pdb
-
-# Cargo
-Cargo.lock
-
-# Go specific
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-*.test
-*.out
-vendor/
-
-# IDE and Editor files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.project
-.classpath
-.settings/
-*.sublime-project
-*.sublime-workspace
-
-# OS specific
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Backup and temporary files
-*.bak
-*.backup
-*.tmp
-*.temp
-*~
-
-# Compiled files
-*.com
-*.class
-*.dll
-*.exe
-*.o
-*.so
-
-# Packages
-*.7z
-*.dmg
-*.gz
-*.iso
-*.jar
-*.rar
-*.tar
-*.zip
-
-# Logs and databases
-*.log
-*.sql
-*.sqlite
-
-# Generated files
-generated/
-.generated/
-auto-generated/
-
-# Build artifacts
-build/
-dist/
-out/
-target/
-
-# Test coverage
-coverage/
-.nyc_output/
-*.lcov
-
-# Documentation build
-docs/_build/
-site/
-
-# Dependency directories
-node_modules/
-vendor/
+# Or if you move to root:
+# contracts/artifacts/
+# contracts/cache/
