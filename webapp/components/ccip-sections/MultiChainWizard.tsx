@@ -2,47 +2,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import yaml from 'js-yaml';
 import { WizardData } from "@/app/ccip-js/multi-chain-wizard/page";
-
-// Global cache for network configuration
-let networkConfigCache: any = null;
+import { loadBloctopusNetworks, loadExistingNetworks, getBlockExplorerUrl as getExplorerUrl } from '@/config/unifiedConfigLoader';
 
 // Client-safe function to get block explorer URL
-function getBlockExplorerUrl(networkKey: string, contractAddress: string): string | null {
-  if (!networkConfigCache) {
-    return null; // Config not loaded yet
-  }
-  
-  const network = networkConfigCache.networks?.find((n: any) => n.key === networkKey);
-  
-  if (!network?.blockExplorer?.url) {
-    return null;
-  }
-  
-  return `${network.blockExplorer.url}/address/${contractAddress}`;
-}
-
-// Load network configuration and cache it
-async function loadAndCacheNetworkConfig() {
-  if (networkConfigCache) {
-    return networkConfigCache;
-  }
-
-  try {
-    const response = await fetch('/network-config.yaml');
-    if (!response.ok) {
-      throw new Error(`Failed to load network config: ${response.statusText}`);
-    }
-    
-    const yamlContent = await response.text();
-    networkConfigCache = yaml.load(yamlContent) as any;
-    return networkConfigCache;
-  } catch (error) {
-    console.warn('Could not load network config from YAML');
-    networkConfigCache = { networks: [] };
-    return networkConfigCache;
-  }
+async function getBlockExplorerUrl(networkKey: string, contractAddress: string): Promise<string | null> {
+  return getExplorerUrl(networkKey, contractAddress);
 }
 
 interface NetworkOption {
@@ -61,15 +26,18 @@ function useAvailableNetworks() {
   useEffect(() => {
     async function loadNetworks() {
       try {
-        const config = await loadAndCacheNetworkConfig();
+        const existingNetworks = await loadExistingNetworks();
+        const bloctopusNetworks = await loadBloctopusNetworks();
         
-        const networkOptions = config.networks.map((network: any) => ({
-          key: network.key,
-          name: network.name,
-          chainSelector: network.chainSelector || '',
-          testnet: network.testnet || false,
-          logoURL: network.logoURL || `https://via.placeholder.com/32/0066cc/ffffff?text=${network.name.charAt(0)}`
-        }));
+        const networkOptions = existingNetworks
+          .filter(network => bloctopusNetworks.some(bn => bn.key === network.fork))
+          .map(network => ({
+            key: network.key,
+            name: network.name,
+            chainSelector: network.chainSelector || '',
+            testnet: network.testnet || false,
+            logoURL: network.logoURL || `https://via.placeholder.com/32/0066cc/ffffff?text=${network.name.charAt(0)}`
+          }));
         
         setNetworks(networkOptions);
       } catch (error) {
@@ -1523,8 +1491,12 @@ interface ClickableAddressProps {
 
 function ClickableAddress({ address, networkKey, label, className }: ClickableAddressProps) {
   const [copied, setCopied] = useState(false);
+  const [blockExplorerUrl, setBlockExplorerUrl] = useState<string | null>(null);
   
-  const blockExplorerUrl = getBlockExplorerUrl(networkKey, address);
+  useEffect(() => {
+    getBlockExplorerUrl(networkKey, address).then(setBlockExplorerUrl);
+  }, [networkKey, address]);
+  
   const shortAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
   
   const copyToClipboard = async (e: React.MouseEvent) => {
@@ -1587,13 +1559,12 @@ interface ConfigurationTxLinkProps {
 
 function ConfigurationTxLink({ txHash, networkKey }: ConfigurationTxLinkProps) {
   const getTxExplorerUrl = async (networkKey: string, txHash: string): Promise<string | null> => {
-    const config = await loadAndCacheNetworkConfig();
-    const network = config?.networks?.find((n: any) => n.key === networkKey);
-    
+    const bloctopusNetworks = await loadBloctopusNetworks();
+    const network = bloctopusNetworks.find((n) => n.key === networkKey);
+
     if (!network?.blockExplorer?.url) {
       return null;
     }
-    
     return `${network.blockExplorer.url}/tx/${txHash}`;
   };
   
