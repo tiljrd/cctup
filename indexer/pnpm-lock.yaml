@@ -48,10 +48,13 @@ importers:
       '@graphprotocol/graph-cli':
         specifier: 0.69.0
         version: 0.69.0(@types/node@22.7.5)(encoding@0.1.13)(node-fetch@2.7.0(encoding@0.1.13))(typescript@5.8.3)
+    devDependencies:
       '@graphprotocol/graph-ts':
         specifier: 0.31.0
         version: 0.31.0
-    devDependencies:
+      assemblyscript:
+        specifier: ^0.28.2
+        version: 0.28.2
       typescript:
         specifier: ^5.0.0
         version: 5.8.3
@@ -664,6 +667,11 @@ packages:
     resolution: {integrity: sha512-fwOQNZVTMga5KRsfY80g7cpOl4PsFQczMwHzdtgoqLXaYhkhavufKb0sB0l3T1DUxpAufA0KNhlbpuuhZUwxMA==}
     hasBin: true
 
+  assemblyscript@0.28.2:
+    resolution: {integrity: sha512-0j6kQdfKqRgmkY9zIzpFVcsLW8lMZ61pIZmmXJNiJeN2rvaHCCBSzHOoFNBh2jlvQNijY2/uxuufnSQma8HmFQ==}
+    engines: {node: '>=20', npm: '>=10'}
+    hasBin: true
+
   astral-regex@2.0.0:
     resolution: {integrity: sha512-Z7tMw1ytTXt5jqMcOP+OQteU1VuNK9Y02uuJtKQ1Sv69jXQKKg5cibLwGJow8yzZP+eAc18EmLGPal0bp36rvQ==}
     engines: {node: '>=8'}
@@ -711,6 +719,10 @@ packages:
 
   binaryen@102.0.0-nightly.20211028:
     resolution: {integrity: sha512-GCJBVB5exbxzzvyt8MGDv/MeUjs6gkXDvf4xOIItRBptYl0Tz5sm1o/uG95YK0L0VeG5ajDu3hRtkBP2kzqC5w==}
+    hasBin: true
+
+  binaryen@123.0.0-nightly.20250530:
+    resolution: {integrity: sha512-d1zPHBN5YlOd3Ff+OUxvVExuFeh8heSnqe+X3bjItFxGLvn4VGBKmrvv7pgy/cRhrIUGuPW138iaWfDhwjyDqg==}
     hasBin: true
 
   bl@1.2.3:
@@ -3170,6 +3182,11 @@ snapshots:
       long: 5.3.2
       source-map-support: 0.5.21
 
+  assemblyscript@0.28.2:
+    dependencies:
+      binaryen: 123.0.0-nightly.20250530
+      long: 5.3.2
+
   astral-regex@2.0.0: {}
 
   async@3.2.6: {}
@@ -3217,6 +3234,8 @@ snapshots:
   binaryen@101.0.0-nightly.20210723: {}
 
   binaryen@102.0.0-nightly.20211028: {}
+
+  binaryen@123.0.0-nightly.20250530: {}
 
   bl@1.2.3:
     dependencies:

@@ -1,0 +1,12 @@
+// subgraph/tsconfig.json
+{
+  "extends": "@graphprotocol/graph-ts/types/tsconfig.base.json",
+  "include": [
+    "src/**/*",
+    "generated/**/*"
+  ],
+  "compilerOptions": {
+    // no JS is ever emitted, this is only for the editor
+    "noEmit": true
+  }
+}
