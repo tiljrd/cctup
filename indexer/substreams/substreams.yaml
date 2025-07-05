@@ -1,0 +1,35 @@
+specVersion: v0.1.0
+package:
+  name: cctup_substreams
+  version: v0.1.0
+  url: https://github.com/tiljrd/cctup
+  doc: |
+    CCTUP Substreams for Ethereum transaction classification and extraction.
+    
+    This substream processes Ethereum blocks and classifies transactions into different types:
+    - Contract creation
+    - ETH transfers
+    - Contract calls with/without data
+    - Precompile calls
+
+protobuf:
+  files:
+    - cctup.proto
+  importPaths:
+    - ./proto
+
+binaries:
+  default:
+    type: wasm/rust-v1
+    file: ./target/wasm32-unknown-unknown/release/cctup_substreams.wasm
+
+modules:
+  - name: map_transactions
+    kind: map
+    initialBlock: 0
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:cctup.TxRecords
+
+network: mainnet
