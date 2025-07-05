@@ -1,13 +1,107 @@
+existing_networks:
+  - id: 296
+    key: "hederaTestnet"
+    name: "Hedera Testnet"
+    nativeCurrency:
+      name: "HBAR"
+      symbol: "HBAR"
+      decimals: 18
+    rpcUrls:
+      - "https://testnet.hashio.io/api"
+    blockExplorer:
+      name: "HashScan"
+      apiURL: "https://server-verify.hashscan.io"
+      url: "https://hashscan.io/testnet"
+      apiKey: "api-key"
+    logoURL: "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/hedera.svg?auto=compress%2Cformat"
+    testnet: true
+    chainSelector: "222782988166878823"
+    linkContract: "0x326C977E6efc84E512bB9C30f76E30c160eD06FB"
+    routerAddress: "0x802C5F84eAD128Ff36fD6a3f8a418e339f467Ce4"
+    fork: "hederaFork"
+    fork_url: http://52.19.17.250:7546/
+    forked_network:
+      #    id: 7185897
+      #    key: "hederaFork"
+      #    name: "Hedera Fork"
+      #    nativeCurrency:
+      #      name: "ETH"
+      #      symbol: "ETH"
+      #      decimals: 18
+      #    rpcUrls:
+      #      - "https://c494ad1d82924f3cbea4aa3ef63250f9-rpc.network.bloctopus.io"
+      #    blockExplorer:
+      #      name: "blockscout"
+      #      url: "https://2c500bb941b14a9a862964363a5dfc4f-faucet.network.bloctopus.io"
+      #      apiKey: "api-key"
+      #      logoURL: "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/ethereum.svg?auto=compress%2Cformat"
+      #    testnet: true
+      #    # Add these when available
+      #    chainSelector: "16140901064496236767"
+      #    linkContract: "0x514910771AF9Ca656af840dff83E8264EcF986CA"
+      #    routerAddress: "0xb8B3670E18F88BA5187010AA7Ab809f06A1228e2"
+      #    forked-from: hederaTestnet
+
+  - id: 11155111
+    key: "sepolia"
+    name: "Sepolia"
+    nativeCurrency:
+      name: "Ethereum"
+      symbol: "ETH"
+      decimals: 18
+    rpcUrls:
+      - "https://ethereum-sepolia.publicnode.com"
+    blockExplorer:
+      name: "etherscan"
+      apiURL: "https://api.etherscan.io/v2/api"
+      url: "https://sepolia.etherscan.io"
+      apiKey: "api-key"
+    logoURL: "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/ethereum.svg?auto=compress%2Cformat"
+    testnet: true
+    chainSelector: "16015286601757825753"
+    linkContract: "0x779877A7B0D9E8603169DdbD7836e478b4624789"
+    routerAddress: "0x0BF3dE8c5D3e8A2B34D2BEeB17ABfCeBaf363A59"
+    fork: "sepoliaFork"
+    fork_url: https://eth-sepolia.g.alchemy.com/v2/lC2HDPB2Vs7-p-UPkgKD-VqFulU5elyk
+    forked_network:
+      #    id: 7185898
+      #    key: "sepoliaFork"
+      #    name: "Sepolia Fork"
+      #    nativeCurrency:
+      #      name: "ETH"
+      #      symbol: "ETH"
+      #      decimals: 18
+      #    rpcUrls:
+      #      - "https://c494ad1d82924f3cbea4aa3ef63250f9-rpc.network.bloctopus.io"
+      #    blockExplorer:
+      #      name: "blockscout"
+      #      url: "https://2c500bb941b14a9a862964363a5dfc4f-faucet.network.bloctopus.io"
+      #      apiKey: "api-key"
+      #      logoURL: "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/ethereum.svg?auto=compress%2Cformat"
+      #    testnet: true
+      #    # Add these when available
+      #    chainSelector: "16140901064496236767"
+      #    linkContract: "0x514910771AF9Ca656af840dff83E8264EcF986CA"
+      #    routerAddress: "0xb8B3670E18F88BA5187010AA7Ab809f06A1228e2"
+      #    forked-from: sepolia
+
+
+
 ethereum_args:
   participants:
     - el_type: reth
       el_image: tiljordan/reth-forking:1.0.0
       el_extra_env_vars:
-        FORKING_RPC_URL: https://eth-mainnet.g.alchemy.com/v2/lC2HDPB2Vs7-p-UPkgKD-VqFulU5elyk
+        FORKING_RPC_URL: ""
         FORKING_BLOCK_HEIGHT: "latest"
       cl_type: lighthouse
   network_params:
     prefunded_accounts: '{"0xe1A74e1FCB254CB1e5eb1245eaAe034A4D7dD538": {"balance": "1000000000ETH"}}'
     seconds_per_slot: 4
+    network_id: ""
   faucet_params:
     private_key: 1cdf65ac75f477650040ebe272ddaffb6735dcf55bd651869963ada71944e6db
+  additional_services:
+  - blockscout
+
+
