@@ -149,8 +149,25 @@ def run(plan, args):
     # Get graph-node endpoint from graph services
     graph_node_url = "http://{}:8000".format(graph_services.graph.ip_address)
     
-    plan.print("Subgraph deployment placeholder - would deploy to: {}".format(graph_node_url))
-    plan.print("IPFS endpoint: http://{}:5001".format(graph_services.ipfs.ip_address))
+    plan.print("Deploying CCTUP indexer subgraph")
+    
+    # Deploy the subgraph using the indexer image
+    indexer_service = plan.add_service(
+        name="cctup-indexer",
+        config=ServiceConfig(
+            image="tiljordan/cctup-indexer:1.0.0",
+            env_vars={
+                "GRAPH_NODE_URL": graph_node_url,
+                "IPFS_URL": "http://{}:5001".format(graph_services.ipfs.ip_address)
+            },
+            cmd=[
+                "sh", "-c", 
+                "cd /app/subgraph && " +
+                "npm run create-local && " +
+                "npm run deploy-local"
+            ]
+        )
+    )
     
     plan.print("CCTUP Orchestrator deployment complete")
     
@@ -158,5 +175,7 @@ def run(plan, args):
         ethereum_rpc=rpc_url,
         graph_services=graph_services,
         firehose=firehose_service,
-        graph_endpoint=graph_node_url
+        graph_endpoint=graph_node_url,
+        indexer=indexer_service
+    )
     )
