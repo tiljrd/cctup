@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const env = validateHardhatEnv(privateKey, rpcUrl);
+    const env = validateHardhatEnv(privateKey);
 
     const result = await executeHardhatTask({
       task: 'configure-pool',

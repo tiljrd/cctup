@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import yaml from 'js-yaml';
 import { WizardData } from "@/app/ccip-js/multi-chain-wizard/page";
@@ -569,6 +569,7 @@ export function DeploymentProgressStep({ wizardData, setWizardData }: Deployment
   const { networks } = useAvailableNetworks();
   const [currentPhase, setCurrentPhase] = useState<'deploying' | 'configuring' | 'completed'>('deploying');
   const [deploymentStarted, setDeploymentStarted] = useState(false);
+  const deploymentInProgress = useRef(false);
   
   // Filter networks based on selected chains
   const selectedNetworks = networks.filter(network => 
@@ -577,7 +578,14 @@ export function DeploymentProgressStep({ wizardData, setWizardData }: Deployment
 
   useEffect(() => {
     // Only start deployment once and if not already started
-    if (!deploymentStarted && !wizardData.deploymentStarted && !wizardData.configurationComplete) {
+    // Check if already complete first to avoid any re-triggers
+    if (wizardData.configurationComplete || deploymentInProgress.current) {
+      return;
+    }
+    
+    if (!deploymentStarted && !wizardData.deploymentStarted) {
+      console.log('🚀 Initiating deployment process...');
+      deploymentInProgress.current = true;
       setDeploymentStarted(true);
       setWizardData({
         ...wizardData,
@@ -585,7 +593,7 @@ export function DeploymentProgressStep({ wizardData, setWizardData }: Deployment
       });
       deployMultiChain();
     }
-  }, [deploymentStarted, wizardData.deploymentStarted, wizardData.configurationComplete]);
+  }, []); // Empty dependency array - only run once on mount
 
   const deployMultiChain = async () => {
     try {
@@ -604,6 +612,9 @@ export function DeploymentProgressStep({ wizardData, setWizardData }: Deployment
         ...wizardData,
         deploymentResults: initialResults
       });
+
+      // Track results locally to avoid stale state issues
+      const localResults: WizardData['deploymentResults'] = {};
 
       // Deploy to each chain using the new API
       const deploymentPromises = wizardData.selectedChains.map(async (chainKey) => {
@@ -631,29 +642,31 @@ export function DeploymentProgressStep({ wizardData, setWizardData }: Deployment
 
           if (result.success) {
             console.log(`✅ Successfully deployed to ${chainKey}`);
-            // Update result for this chain
-            setWizardData(prevData => {
-              const newResults = { ...prevData.deploymentResults };
-              newResults[chainKey] = {
-                ...newResults[chainKey],
-                status: 'success' as const,
-                tokenAddress: result.tokenAddress,
-                poolAddress: result.poolAddress,
-                transactionHash: result.transactionHash,
-                configurationStatus: {}
-              };
-              
-              // Initialize configuration status for all other chains
-              wizardData.selectedChains.forEach(targetChain => {
-                if (targetChain !== chainKey) {
-                  newResults[chainKey].configurationStatus![targetChain] = 'pending';
-                }
-              });
-              
-              return {
-                ...prevData,
-                deploymentResults: newResults
-              };
+            
+            // Update local results
+            localResults[chainKey] = {
+              status: 'success' as const,
+              tokenAddress: result.tokenAddress,
+              poolAddress: result.poolAddress,
+              transactionHash: result.transactionHash,
+              configurationStatus: {}
+            };
+            
+            // Initialize configuration status for all other chains
+            wizardData.selectedChains.forEach(targetChain => {
+              if (targetChain !== chainKey) {
+                localResults[chainKey].configurationStatus![targetChain] = 'pending';
+              }
+            });
+            
+            // Update React state - get current state first
+            const currentWizardData = wizardData; // This will be stale, but we need it for other fields
+            setWizardData({
+              ...currentWizardData,
+              deploymentResults: {
+                ...currentWizardData.deploymentResults,
+                [chainKey]: localResults[chainKey]
+              }
             });
           } else {
             throw new Error(result.error || 'Deployment failed');
@@ -662,57 +675,69 @@ export function DeploymentProgressStep({ wizardData, setWizardData }: Deployment
           console.error(`❌ Error deploying to ${chainKey}:`, error);
           const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
           
-          setWizardData(prevData => ({
-            ...prevData,
+          localResults[chainKey] = {
+            status: 'error' as const,
+            error: errorMessage,
+            configurationStatus: {}
+          };
+          
+          setWizardData({
+            ...wizardData,
             deploymentResults: {
-              ...prevData.deploymentResults,
-              [chainKey]: {
-                ...prevData.deploymentResults[chainKey],
-                status: 'error' as const,
-                error: errorMessage
-              }
+              ...wizardData.deploymentResults,
+              [chainKey]: localResults[chainKey]
             }
-          }));
+          });
         }
       });
 
       // Wait for all deployments to complete
       await Promise.all(deploymentPromises);
 
-      // Check current deployment status
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Brief delay to ensure state is updated
-      
-      const currentResults = Object.values(wizardData.deploymentResults);
+      // Check deployment status using local results
+      const currentResults = Object.values(localResults);
       const successfulDeployments = currentResults.filter(r => r.status === 'success').length;
+      
+      console.log(`📊 Deployment summary: ${successfulDeployments}/${wizardData.selectedChains.length} chains deployed successfully`);
+      
+      // Update final state with all results
+      setWizardData({
+        ...wizardData,
+        deploymentResults: localResults
+      });
       
       if (successfulDeployments >= 2) {
         console.log('🔗 Starting cross-chain configuration...');
         setCurrentPhase('configuring');
         
-        // Real configuration logic
-        await configureNetworks();
+        // Pass local results to configuration
+        await configureNetworks(localResults);
       } else {
         console.log('⚠️ Insufficient successful deployments for cross-chain configuration');
         setCurrentPhase('completed');
-        setWizardData(prevData => ({
-          ...prevData,
-          configurationComplete: false
-        }));
+        setWizardData({
+          ...wizardData,
+          deploymentResults: localResults,
+          configurationComplete: false,
+          deploymentStarted: true // Prevent re-trigger
+        });
       }
     } catch (error) {
       console.error('❌ Multi-chain deployment error:', error);
       setCurrentPhase('completed');
+    } finally {
+      deploymentInProgress.current = false;
     }
   };
 
-  const configureNetworks = async () => {
+  const configureNetworks = async (localResults: WizardData['deploymentResults']) => {
     try {
       const successfulChains = wizardData.selectedChains.filter(
-        chainKey => wizardData.deploymentResults[chainKey]?.status === 'success'
+        chainKey => localResults[chainKey]?.status === 'success'
       );
 
       // Immediately update all configuration statuses to show loading state
-      setWizardData(prevData => {
+      setWizardData((prevData: WizardData) => {
         const newResults = { ...prevData.deploymentResults };
         
         // Set all chain pairs to 'configuring' status for immediate UI feedback
@@ -740,7 +765,7 @@ export function DeploymentProgressStep({ wizardData, setWizardData }: Deployment
         for (const targetChain of successfulChains) {
           if (sourceChain !== targetChain) {
             configPromises.push(
-              configureChainPair(sourceChain, targetChain)
+              configureChainPair(sourceChain, targetChain, localResults)
             );
           }
         }
@@ -749,10 +774,18 @@ export function DeploymentProgressStep({ wizardData, setWizardData }: Deployment
       await Promise.all(configPromises);
       
       setCurrentPhase('completed');
-      setWizardData(prevData => ({
-        ...prevData,
-        configurationComplete: true
-      }));
+      
+      // Update state with local results and mark as complete
+      const finalWizardData = {
+        ...wizardData,
+        deploymentResults: {
+          ...wizardData.deploymentResults,
+          ...localResults
+        },
+        configurationComplete: true,
+        deploymentStarted: true // Ensure this remains true
+      };
+      setWizardData(finalWizardData);
       
     } catch (error) {
       console.error('❌ Configuration error:', error);
@@ -760,12 +793,12 @@ export function DeploymentProgressStep({ wizardData, setWizardData }: Deployment
     }
   };
 
-  const configureChainPair = async (sourceChain: string, targetChain: string) => {
+  const configureChainPair = async (sourceChain: string, targetChain: string, localResults: WizardData['deploymentResults']) => {
     try {
       console.log(`🔗 Configuring ${sourceChain} -> ${targetChain}...`);
       
       // Update status to configuring
-      setWizardData(prevData => {
+      setWizardData((prevData: WizardData) => {
         const newResults = { ...prevData.deploymentResults };
         if (!newResults[sourceChain].configurationStatus) {
           newResults[sourceChain].configurationStatus = {};
@@ -785,10 +818,10 @@ export function DeploymentProgressStep({ wizardData, setWizardData }: Deployment
         },
         body: JSON.stringify({
           network: sourceChain,
-          localPool: wizardData.deploymentResults[sourceChain].poolAddress,
+          localPool: localResults[sourceChain].poolAddress,
           remoteNetwork: targetChain,
-          remotePool: wizardData.deploymentResults[targetChain].poolAddress,
-          remoteToken: wizardData.deploymentResults[targetChain].tokenAddress,
+          remotePool: localResults[targetChain].poolAddress,
+          remoteToken: localResults[targetChain].tokenAddress,
           poolType: wizardData.poolType,
         }),
       });
@@ -796,7 +829,7 @@ export function DeploymentProgressStep({ wizardData, setWizardData }: Deployment
       const result = await response.json();
       
       // Update configuration status with transaction hash if successful
-      setWizardData(prevData => {
+      setWizardData((prevData: WizardData) => {
         const newResults = { ...prevData.deploymentResults };
         if (!newResults[sourceChain].configurationStatus) {
           newResults[sourceChain].configurationStatus = {};
@@ -833,7 +866,7 @@ export function DeploymentProgressStep({ wizardData, setWizardData }: Deployment
       console.error(`❌ Configuration error: ${sourceChain} -> ${targetChain}:`, error);
       
       // Update status to error
-      setWizardData(prevData => {
+      setWizardData((prevData: WizardData) => {
         const newResults = { ...prevData.deploymentResults };
         if (!newResults[sourceChain].configurationStatus) {
           newResults[sourceChain].configurationStatus = {};
@@ -1328,8 +1361,8 @@ interface ConfigurationTxLinkProps {
 }
 
 function ConfigurationTxLink({ txHash, networkKey }: ConfigurationTxLinkProps) {
-  const getTxExplorerUrl = (networkKey: string, txHash: string): string | null => {
-    const config = loadAndCacheNetworkConfig();
+  const getTxExplorerUrl = async (networkKey: string, txHash: string): Promise<string | null> => {
+    const config = await loadAndCacheNetworkConfig();
     const network = config?.networks?.find((n: any) => n.key === networkKey);
     
     if (!network?.blockExplorer?.url) {
@@ -1339,7 +1372,11 @@ function ConfigurationTxLink({ txHash, networkKey }: ConfigurationTxLinkProps) {
     return `${network.blockExplorer.url}/tx/${txHash}`;
   };
   
-  const blockExplorerUrl = getTxExplorerUrl(networkKey, txHash);
+  const [blockExplorerUrl, setBlockExplorerUrl] = useState<string | null>(null);
+  
+  useEffect(() => {
+    getTxExplorerUrl(networkKey, txHash).then(setBlockExplorerUrl);
+  }, [networkKey, txHash]);
   
   if (!blockExplorerUrl) {
     return <span className="text-xs text-gray-500 font-mono">{txHash.slice(0, 10)}...</span>;
