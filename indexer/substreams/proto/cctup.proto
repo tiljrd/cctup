@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package cctup;
+
+message TxRecords {
+  repeated TxRecord records = 1;
+}
+
+message TxRecord {
+  bytes id = 1;
+  string kind = 2;
+  Raw raw = 3;
+  optional Decoded decoded = 4;
+}
+
+message Raw {
+  bytes from = 1;
+  bytes to = 2;
+  string value = 3;
+  uint64 gas_limit = 4;
+  string gas_price = 5;
+  string max_fee_per_gas = 6;
+  string max_priority_fee_per_gas = 7;
+  string access_list = 8;
+  bytes data = 9;
+  uint32 tx_type = 10;
+}
+
+message Decoded {
+  string selector = 1;
+  string fn_sig = 2;
+  repeated string args = 3;
+  string abi_source = 4;
+  string args_json = 5;
+}

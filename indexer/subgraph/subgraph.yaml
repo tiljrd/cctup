@@ -1,0 +1,16 @@
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: substreams
+    name: TxStream
+    network: mainnet
+    source:
+      package:
+        moduleName: map_transactions
+        file: ../substreams/txs.spkg
+    mapping:
+      kind: substreams/graph-entities
+      apiVersion: 0.0.7
+      file: ./src/mapping.ts
+      handler: handleBlock

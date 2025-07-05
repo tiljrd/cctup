@@ -1,0 +1,23 @@
+{
+  "name": "cctup-indexer",
+  "version": "0.1.0",
+  "description": "EVM chain indexing solution with record and replay capabilities",
+  "private": true,
+  "workspaces": [
+    "substreams",
+    "subgraph", 
+    "scripts"
+  ],
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}
