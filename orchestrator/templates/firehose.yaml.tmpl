@@ -9,6 +9,13 @@ start:
     reader-node-path: "/usr/local/bin/fireeth"
     reader-node-arguments: "tools poller generic-evm {{.rpc_url}} 1 --interval-between-fetch=0s"
     common-first-streamable-block: 1
-    common-live-blocks-addr: "localhost:10015"
+    common-live-blocks-addr: "localhost:10014"
+    common-merged-blocks-store-url: "file:///data/merged-blocks"
+    common-one-block-store-url: "file:///data/one-blocks"
+    common-forked-blocks-store-url: "file:///data/forked-blocks"
+    firehose-grpc-listen-addr: ":10015"
+    substreams-tier1-grpc-listen-addr: ":9000"
+    substreams-tier1-block-type: "sf.ethereum.type.v2.Block"
+    substreams-state-bundle-size: 10
     advertise-chain-name: "eth-local"
     ignore-advertise-validation: true

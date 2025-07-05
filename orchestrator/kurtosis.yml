@@ -1,5 +1,5 @@
-name: github.com/tiljrd/cctup
+name: github.com/tiljrd/cctup/orchestrator
 description: |-
-  # github.com/tiljrd/cctup
+  # github.com/tiljrd/cctup/orchestrator
   CCTUP Orchestrator
 replace: {}

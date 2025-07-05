@@ -39,13 +39,13 @@ def run(plan, args):
         config=ServiceConfig(
             image="tiljordan/firehose:1.0.0",
             ports={
-                "grpc": PortSpec(number=9000, transport_protocol="TCP", wait=None)
+                "grpc": PortSpec(number=9000, transport_protocol="TCP", wait="1m"),
+                "api": PortSpec(number=10015, transport_protocol="TCP", wait="1m")
             },
             files = {
                 "/tmp/config/": firehose_config
             },
-            entrypoint=[],
-            cmd=["start", "-c", "/tmp/config/firehose.yaml", "--advertise-block-features=base", "--substreams-tier1-grpc-listen-addr", ":9000", "--substreams-tier1-block-type", "sf.ethereum.type.v2.Block", "--substreams-state-bundle-size", "10", "-vvvv"]
+            cmd=["start", "-c", "/tmp/config/firehose.yaml", "--advertise-block-features=base"]
         )
     )
 
@@ -57,7 +57,7 @@ def run(plan, args):
         config=ServiceConfig(
             image="tiljordan/substreams:1.0.0",
             cmd=[
-                "/bin/sh", "-c", "substreams run map_transactions -e {} --plaintext && sleep infinity".format(firehose_grpc_url)
+                "/bin/sh", "-c", "cd /app && substreams run map_transactions -e {} --plaintext".format(firehose_grpc_url)
             ],
         )
     )
