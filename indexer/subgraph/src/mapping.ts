@@ -1,4 +1,4 @@
-import { TxRecords } from "../generated/TxStream/TxStream";
+import { TxRecords } from "./types/TxStream";
 import { Transaction } from "../generated/schema";
 import { Bytes, BigInt } from "@graphprotocol/graph-ts";
 
