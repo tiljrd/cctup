@@ -37,6 +37,69 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {/* Multi-Chain Deployment Wizard - Featured */}
+          <Link href="/ccip-js/multi-chain-wizard" className="group md:col-span-2 lg:col-span-3">
+            <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow text-white relative overflow-hidden">
+              <div className="relative z-10">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center mb-4">
+                      <div className="p-3 bg-white bg-opacity-20 rounded-lg">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                      </div>
+                      <div className="ml-4">
+                        <h3 className="text-2xl font-bold text-white group-hover:text-blue-100">
+                          🚀 Multi-Chain Deployment Wizard
+                        </h3>
+                        <span className="inline-block px-3 py-1 bg-yellow-400 text-yellow-900 text-sm font-medium rounded-full mt-1">
+                          NEW
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-blue-100 mb-4 text-lg">
+                      Deploy tokens and pools across multiple chains in one unified flow - similar to the Chainlink Token Manager
+                    </p>
+                    <ul className="text-sm text-blue-100 space-y-2 mb-6">
+                      <li className="flex items-center">
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Select multiple chains for deployment
+                      </li>
+                      <li className="flex items-center">
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Automated token and pool deployment
+                      </li>
+                      <li className="flex items-center">
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Automatic cross-chain configuration
+                      </li>
+                    </ul>
+                    <div className="inline-flex items-center px-4 py-2 bg-white text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-colors">
+                      Try Multi-Chain Wizard
+                      <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="hidden lg:block">
+                    <svg className="w-32 h-32 text-white opacity-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-32 -mt-32"></div>
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white opacity-5 rounded-full -ml-24 -mb-24"></div>
+            </div>
+          </Link>
+
           {/* Deploy CCIP Tokens & Pools Section */}
           <Link href="/ccip-js/deploy" className="group">
             <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow border-l-4 border-indigo-500">
