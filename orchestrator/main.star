@@ -126,7 +126,8 @@ def run(plan, args):
                 "postgres_user": postgres_user,
                 "postgres_pass": postgres_password,
                 "postgres_db": postgres_database,
-                "GRAPH_NODE_FIREHOSE_DISABLE_EXTENDED_BLOCKS_FOR_CHAINS": disable_check_list
+                "GRAPH_NODE_FIREHOSE_DISABLE_EXTENDED_BLOCKS_FOR_CHAINS": disable_check_list,
+                "GRAPH_NODE_DISABLE_BLOCK_INGESTOR": "true"
             },
             files={
                 "/tmp/config/": graph_node_config
