@@ -1,0 +1,23 @@
+[store]
+[store.primary]
+connection = "postgresql://${postgres_user}:${postgres_pass}@${postgres_host}/${postgres_db}"
+pool_size  = 10
+
+[chains]
+ingestor = "block_ingestor_node"
+
+{{- range .networks }}
+[chains.{{ .name }}]
+shard    = "primary"
+protocol = "ethereum"
+
+provider = [
+  { label = "substreams-{{ .name }}", details = { type = "substreams", url = "{{ .substreams_grpc }}", token = "{{ .substreams_token }}", features = [] } },
+  { label = "firehose-{{ .name }}", details = { type = "firehose", url = "{{ .firehose_grpc }}", token = "{{ .firehose_token }}", features = ["compression"] } },
+  { label = "web3call-{{ .name }}", details = { type = "web3call", transport = "rpc", url = "{{ .rpc }}", features = [] } }
+]
+{{- end }}
+
+[deployment]
+[[deployment.rule]]
+indexers = [ "block_ingestor_node" ]
