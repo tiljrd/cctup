@@ -1,13 +1,10 @@
 import { readFileSync } from 'fs';
-import { parse } from 'yaml';
-import { config } from 'dotenv';
+import { load } from 'js-yaml';
 import type { ReplayerConfig, ReplayDocument } from '../types/config.js';
-
-config();
 
 export function loadReplayerConfig(configPath: string = './replayer.config.yaml'): ReplayerConfig {
   const configContent = readFileSync(configPath, 'utf8');
-  const rawConfig = parse(configContent) as ReplayerConfig;
+  const rawConfig = load(configContent) as ReplayerConfig;
   
   return {
     ...rawConfig,
@@ -25,7 +22,7 @@ export function loadReplayerConfig(configPath: string = './replayer.config.yaml'
 
 export function loadReplayDocument(replayPath: string): ReplayDocument {
   const replayContent = readFileSync(replayPath, 'utf8');
-  return parse(replayContent) as ReplayDocument;
+  return load(replayContent) as ReplayDocument;
 }
 
 function substituteEnvVars(value: string): string {
