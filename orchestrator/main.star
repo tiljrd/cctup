@@ -49,7 +49,7 @@ def run(plan, args):
             files = {
                 "/tmp/config/": firehose_config
             },
-            entrypoint = ["firecore"],
+            entrypoint = ["fireeth"],
             cmd=["start", "-c", "/tmp/config/firehose.yaml", "--advertise-block-features=base"]
         )
     )
@@ -127,7 +127,8 @@ def run(plan, args):
                 "postgres_user": postgres_user,
                 "postgres_pass": postgres_password,
                 "postgres_db": postgres_database,
-                "GRAPH_NODE_FIREHOSE_DISABLE_EXTENDED_BLOCKS_FOR_CHAINS": disable_check_list
+                "GRAPH_NODE_FIREHOSE_DISABLE_EXTENDED_BLOCKS_FOR_CHAINS": disable_check_list,
+                "GRAPH_LOG": "trace"
             },
             files={
                 "/tmp/config/": graph_node_config
@@ -136,7 +137,7 @@ def run(plan, args):
                 "graph-node",
                 "--config", "/tmp/config/config.toml",
                 "--ipfs", ipfs_url,
-                "--node-id", "block_ingestor_node",
+                "--node-id", "block_ingestor_node"
             ]
         )
     )
