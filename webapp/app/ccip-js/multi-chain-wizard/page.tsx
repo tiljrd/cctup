@@ -10,6 +10,7 @@ import {
   PoolTypeSelectionStep,
   ReviewAndSimulateStep,
   SimulateExecutionStep,
+  ExecutionStep,
   ExecuteTransactionsStep
 } from "@/components/ccip-sections/MultiChainWizard";
 
@@ -152,14 +153,14 @@ function MultiChainWizardContent() {
         );
       case 'simulate':
         return (
-          <SimulateExecutionStep
+          <ExecutionStep
             wizardData={wizardData}
             setWizardData={setWizardData}
           />
         );
       case 'execute':
         return (
-          <ExecuteTransactionsStep
+          <SimulateExecutionStep
             wizardData={wizardData}
             setWizardData={setWizardData}
           />

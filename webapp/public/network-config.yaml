@@ -1,25 +1,114 @@
-existing_networks:
-  - id: 296
+# CCIP Network Configuration
+# This file defines all supported networks, tokens, and CCIP-specific addresses
+forkedNetworks:
+  - id: 3151908
+    key: "hederaFork"
+    name: "Hedera Fork"
+    nativeCurrency:
+      name: "ETH"
+      symbol: "ETH"
+      decimals: 18
+    rpcUrls:
+      - "http://127.0.0.1:57393"
+    blockExplorer:
+      name: "blockscout"
+      apiURL: "http://127.0.0.1:57515/api"
+      url: "http://127.0.0.1:3333"
+      apiKey: "api-key"
+      logoURL: "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/ethereum.svg?auto=compress%2Cformat"
+    testnet: true
+    # Add these when available
+    chainSelector: "16140901064496236767"
+    linkContract: "0x514910771AF9Ca656af840dff83E8264EcF986CA"
+    routerAddress: "0xb8B3670E18F88BA5187010AA7Ab809f06A1228e2"
+    forkedFrom: hederaTestnet
+  - id: 3151909
+    key: "sepoliaFork"
+    name: "Sepolia Fork"
+    nativeCurrency:
+      name: "ETH"
+      symbol: "ETH"
+      decimals: 18
+    rpcUrls:
+      - "http://127.0.0.1:58081"
+    blockExplorer:
+      name: "blockscout"
+      apiURL: "http://127.0.0.1:58223/api"
+      url: "http://127.0.0.1:3334"
+      apiKey: "api-key"
+      logoURL: "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/ethereum.svg?auto=compress%2Cformat"
+    testnet: true
+    # Add these when available
+    chainSelector: "16140901064496236767"
+    linkContract: "0x514910771AF9Ca656af840dff83E8264EcF986CA"
+    routerAddress: "0xb8B3670E18F88BA5187010AA7Ab809f06A1228e2"
+    forkedFrom: sepolia
+
+
+    # non working ones 
+  - id: 7185899
+    key: "baseSepoliaFork"
+    name: "Base Sepolia Fork"
+    nativeCurrency:
+      name: "ETH"
+      symbol: "ETH"
+      decimals: 18
+    rpcUrls:
+      - "https://c494ad1d82924f3cbea4aa3ef63250f9-rpc.network.bloctopus.io"
+    blockExplorer:
+      name: "blockscout"
+      url: "https://2c500bb941b14a9a862964363a5dfc4f-faucet.network.bloctopus.io"
+      apiKey: "api-key"
+      logoURL: "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/ethereum.svg?auto=compress%2Cformat"
+    testnet: true
+    # Add these when available
+    chainSelector: "16140901064496236767"
+    linkContract: "0x514910771AF9Ca656af840dff83E8264EcF986CA"
+    routerAddress: "0xb8B3670E18F88BA5187010AA7Ab809f06A1228e2"
+    forked-from: baseSepolia
+  - id: 7185898
+    key: "optimismSepoliaFork"
+    name: "Optimism Sepolia Fork"
+    nativeCurrency:
+      name: "ETH"
+      symbol: "ETH"
+      decimals: 18
+    rpcUrls:
+      - "https://c494ad1d82924f3cbea4aa3ef63250f9-rpc.network.bloctopus.io"
+    blockExplorer:
+      name: "blockscout"
+      url: "https://2c500bb941b14a9a862964363a5dfc4f-faucet.network.bloctopus.io"
+      apiKey: "api-key"
+      logoURL: "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/ethereum.svg?auto=compress%2Cformat"
+    testnet: true
+    # Add these when available
+    chainSelector: "16140901064496236767"
+    linkContract: "0x514910771AF9Ca656af840dff83E8264EcF986CA"
+    routerAddress: "0xb8B3670E18F88BA5187010AA7Ab809f06A1228e2"
+    forked-from: optimismSepolia
+
+
+existingNetworks:
+  - id: 84532
     key: "hederaTestnet"
     name: "Hedera Testnet"
     nativeCurrency:
-      name: "HBAR"
-      symbol: "HBAR"
+      name: "ETH"
+      symbol: "ETH"
       decimals: 18
     rpcUrls:
-      - "https://testnet.hashio.io/api"
+      - "https://sepolia.base.org"
     blockExplorer:
       name: "HashScan"
-      apiURL: "https://server-verify.hashscan.io"
-      url: "https://hashscan.io/testnet"
+      apiURL: "https://api.etherscan.io/v2/api"
+      url: "https://sepolia.basescan.org"
       apiKey: "api-key"
     logoURL: "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/hedera.svg?auto=compress%2Cformat"
     testnet: true
-    chainSelector: "222782988166878823"
-    linkContract: "0x326C977E6efc84E512bB9C30f76E30c160eD06FB"
-    routerAddress: "0x802C5F84eAD128Ff36fD6a3f8a418e339f467Ce4"
-    fork: "hedera"
-    fork_url: http://52.19.17.250:7546/
+    chainSelector: "10344971235874465080"
+    linkContract: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410"
+    routerAddress: "0xD3b06cEbF099CE7DA4AcCf578aaebFDBd6e88a93"
+    fork: "hederaFork"
 
   - id: 11155112
     key: "sepoliaTestnet"
