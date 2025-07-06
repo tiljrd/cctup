@@ -188,7 +188,14 @@ def run(plan, args):
     plan.exec(
         service_name="indexer",
         recipe=ExecRecipe(
-            command=["sh", "-c", "cd /app/subgraph && graph create --node {} cctup/indexer".format(graph_node_url)]
+            command=["sh", "-c", "cd /app/subgraph && graph create --node {} cctup/indexer_sepolia".format(graph_node_url)]
+        )
+    )
+
+    plan.exec(
+        service_name="indexer",
+        recipe=ExecRecipe(
+            command=["sh", "-c", "cd /app/subgraph && graph create --node {} cctup/indexer_hedera".format(graph_node_url)]
         )
     )
 
@@ -196,38 +203,14 @@ def run(plan, args):
     plan.exec(
         service_name="indexer",
         recipe=ExecRecipe(
-            command=["sh", "-c", "cd /app/subgraph && graph deploy --node {} --ipfs http://{}:5001 --version-label v0.0.1 cctup/indexer".format(graph_node_url, graph_services.ipfs.ip_address)]
+            command=["sh", "-c", "cd /app/subgraph && graph deploy --node {} --ipfs http://{}:5001 --version-label v0.0.1 cctup/indexer_sepolia subgraph_sepolia.yaml".format(graph_node_url, graph_services.ipfs.ip_address)]
         )
     )
-    
 
-    plan.print("Spinning up CCTUP UI")
-    tomls_art = plan.render_templates(
-        name   = "network-configs",
-        config = {
-            "/generated-network-config.yaml": struct(
-                template = read_file("../templates/cctup-networks-configs-template.yaml"),
-                data = {
-                    "ForkedNetworks": forked_networks,
-                    "ExistingNetworks": existing_networks
-                }
-            )
-        }
-    )
-    cctup_ui_service = plan.add_service(
-        name="cctup-ui",
-        config=ServiceConfig(
-            image="fravlaca/cctup-ui:1.0.0",
-            env_vars = {
-                "NEXT_PUBLIC_CCIP_CONFIG_FILE": "/generated-network-config.yaml",
-                "HARDHAT_PRIVATE_KEY": args["deployer_private_key"]
-            },
-            ports={
-                "http": PortSpec(number=3001, transport_protocol="TCP", wait="1m")
-            },
-            files = {
-                "/public": tomls_art
-            }
+    plan.exec(
+        service_name="indexer",
+        recipe=ExecRecipe(
+            command=["sh", "-c", "cd /app/subgraph && graph deploy --node {} --ipfs http://{}:5001 --version-label v0.0.1 cctup/indexer_hedera subgraph_hedera.yaml".format(graph_node_url, graph_services.ipfs.ip_address)]
         )
     )
 

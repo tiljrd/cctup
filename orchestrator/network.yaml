@@ -29,7 +29,7 @@ existing_networks:
             symbol: "ETH"
             decimals: 18
           rpcUrls:
-            - "http://host.docker.internal"
+            - "http://host.docker.internal:51210"
           blockExplorer:
             name: "blockscout"
             apiURL: "http://host.docker.internal:51277"
