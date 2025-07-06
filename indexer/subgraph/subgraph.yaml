@@ -4,11 +4,11 @@ schema:
 dataSources:
   - kind: substreams
     name: TxStream
-    network: mainnet
+    network: sepolia
     source:
       package:
         moduleName: map_transactions
-        file: ../substreams/txs.spkg
+        file: ../substreams/sepolia.spkg
     mapping:
       kind: substreams/graph-entities
       apiVersion: 0.0.7

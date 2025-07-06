@@ -160,7 +160,7 @@ def run(plan, args):
     indexer_service = plan.add_service(
         name="indexer",
         config=ServiceConfig(
-            image="tiljordan/cctup-indexer:1.0.1",
+            image="tiljordan/cctup-indexer:1.0.2",
             env_vars={
                 "GRAPH_NODE_URL": graph_node_url,
                 "IPFS_URL": "http://{}:5001".format(graph_services.ipfs.ip_address)

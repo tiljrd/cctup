@@ -32,4 +32,4 @@ modules:
     output:
       type: proto:cctup.TxRecords
 
-network: mainnet
+network: hedera
