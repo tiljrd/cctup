@@ -159,5 +159,8 @@ webapp/src/ccip-starter-kit-hardhat/cache/
 # Or if you move to root:
 # contracts/artifacts/
 # contracts/cache/
-**/generated
+**/generated_sepolia
+**/generated_hedera
+**/build_sepolia
+**/build_hedera
 .idea

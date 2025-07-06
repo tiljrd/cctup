@@ -1,4 +1,4 @@
-type Transaction @entity {
+type Transaction @entity(immutable: true) {
   id: Bytes!        # tx hash
   kind: String!     # enum as string
   from: Bytes!

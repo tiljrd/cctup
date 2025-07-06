@@ -1,5 +1,5 @@
 import { TxRecords } from "./types/TxStream";
-import { Transaction } from "../generated/schema";
+import { Transaction } from "../generated_sepolia/schema";
 import { Bytes, BigInt, log } from "@graphprotocol/graph-ts";
 
 class DecodedData {
