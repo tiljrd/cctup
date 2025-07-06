@@ -1,7 +1,7 @@
 # CCIP Network Configuration
 # This file defines all supported networks, tokens, and CCIP-specific addresses
 forkedNetworks:
-  - id: 7185897
+  - id: 3151908
     key: "hederaFork"
     name: "Hedera Fork"
     nativeCurrency:
@@ -9,10 +9,11 @@ forkedNetworks:
       symbol: "ETH"
       decimals: 18
     rpcUrls:
-      - "https://c494ad1d82924f3cbea4aa3ef63250f9-rpc.network.bloctopus.io"
+      - "http://127.0.0.1:58059"
     blockExplorer:
       name: "blockscout"
-      url: "https://2c500bb941b14a9a862964363a5dfc4f-faucet.network.bloctopus.io"
+      apiURL: "http://127.0.0.1:59578"
+      url: "http://127.0.0.1:3333"
       apiKey: "api-key"
       logoURL: "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/ethereum.svg?auto=compress%2Cformat"
     testnet: true
@@ -20,8 +21,8 @@ forkedNetworks:
     chainSelector: "16140901064496236767"
     linkContract: "0x514910771AF9Ca656af840dff83E8264EcF986CA"
     routerAddress: "0xb8B3670E18F88BA5187010AA7Ab809f06A1228e2"
-    forked-from: hederaTestnet
-  - id: 7185898
+    forkedFrom: hederaTestnet
+  - id: 3151909
     key: "sepoliaFork"
     name: "Sepolia Fork"
     nativeCurrency:
@@ -29,10 +30,11 @@ forkedNetworks:
       symbol: "ETH"
       decimals: 18
     rpcUrls:
-      - "https://c494ad1d82924f3cbea4aa3ef63250f9-rpc.network.bloctopus.io"
+      - "http://127.0.0.1:61717"
     blockExplorer:
       name: "blockscout"
-      url: "https://2c500bb941b14a9a862964363a5dfc4f-faucet.network.bloctopus.io"
+      apiURL: "http://127.0.0.1:61878"
+      url: "http://127.0.0.1:3334"
       apiKey: "api-key"
       logoURL: "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/ethereum.svg?auto=compress%2Cformat"
     testnet: true
@@ -40,7 +42,7 @@ forkedNetworks:
     chainSelector: "16140901064496236767"
     linkContract: "0x514910771AF9Ca656af840dff83E8264EcF986CA"
     routerAddress: "0xb8B3670E18F88BA5187010AA7Ab809f06A1228e2"
-    forked-from: sepolia
+    forkedFrom: sepolia
 
 
     # non working ones 
