@@ -6,6 +6,7 @@ dataSources:
     name: TxStream
     network: sepolia
     source:
+      startBlock: 1100
       package:
         moduleName: map_transactions
         file: ../substreams/sepolia.spkg

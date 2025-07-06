@@ -6,6 +6,7 @@ dataSources:
     name: TxStream
     network: hedera
     source:
+      startBlock: 1100
       package:
         moduleName: map_transactions
         file: ../substreams/hedera.spkg
