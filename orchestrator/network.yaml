@@ -1,6 +1,6 @@
 existing_networks:
   - id: 296
-    key: "hederaTestnet"
+    key: "hedera-testnet"
     name: "Hedera Testnet"
     nativeCurrency:
       name: "HBAR"
@@ -103,5 +103,9 @@ ethereum_args:
     private_key: 1cdf65ac75f477650040ebe272ddaffb6735dcf55bd651869963ada71944e6db
   additional_services:
   - blockscout
+  blockscout_params:
+    port_frontend_override: ""
+    service_name_suffix: ""
+  env: dev
 
 

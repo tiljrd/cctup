@@ -1,26 +1,31 @@
+
 def run(plan, args):
-    env = args.get("env", "main")
+    env = args.get("env", "dev")
     
     ethereum = import_module("github.com/LZeroAnalytics/ethereum-package@{}/main.star".format(env))
     graph = import_module("github.com/LZeroAnalytics/graph-package@{}/main.star".format(env))
 
-
+    blockscout_port = 3333
     network_results = []
     forked_networks = []
-    for existing_network in args.get("existing_networks", []):
+    existing_networks = args.get("existing_networks", [])
+    for existing_network in existing_networks:
         forked_network = existing_network["forked_network"]
 
         if not forked_network:
             ethereum_args = args.get("ethereum_args", {})
-            ethereum_args["network_params"]["network_id"] = existing_network["id"]
+            ethereum_args["network_params"]["network_id"] = str(existing_network["id"])
             ethereum_args["participants"][0]["el_extra_env_vars"]["FORKING_RPC_URL"] = existing_network["fork_url"]
+            ethereum_args["blockscout_params"]["service_name_suffix"] = existing_network["key"]
+            ethereum_args["blockscout_params"]["port_frontend_override"] = blockscout_port
+            blockscout_port += 1
 
             plan.print("Spinning up Ethereum network")
             ethereum_args["env"] = env
             ethereum_output = ethereum.run(plan, ethereum_args)
             first = ethereum_output.all_participants[0]
             network_results.append(ethereum_output)
-            forked_network = create_forked_network_object(ethereum_output, existing_network, ethereum_args)
+            forked_network = create_forked_network_object(plan, ethereum_output, existing_network, ethereum_args)
 
         forked_networks.append(forked_network)
         
@@ -119,7 +124,8 @@ def run(plan, args):
     plan.print("CCTUP Orchestrator deployment complete")
     
     return struct(
-        ethereum_rpc=rpc_url,
+        forked_networks=forked_networks,
+        existing_networks=existing_networks,
         graph_services=graph_services,
         firehose=firehose_service,
         substream=substream_service,
@@ -144,7 +150,7 @@ def create_forked_network_object(ethereum_output, existing_network, ethereum_arg
         "blockExplorer": {
             "name": "blockscout",
             "apiURL": ethereum_output.blockscout_sc_verifier_url,
-            "url": "", #TODO need to find a way to get blocksout ui url as the name of the serivice is the same accross packages (how, doe it not conflicts?) and there is not info returnred in eth pakage output: maybe add to that?
+            "url": blockscout_url
         },
         "testnet": True,
         "chainSelector": existing_network["chainSelector"],
