@@ -1,8 +1,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
-import * as yaml from 'js-yaml';
-import * as fs from 'fs';
+import { loadAllNetworksSync, findNetworkByKeySync, getNetworkRpcUrlSync } from '../config/serverConfigLoader';
 
 const execAsync = promisify(exec);
 
@@ -122,29 +121,6 @@ async function processNetworkQueue(networkKey: string): Promise<void> {
   } finally {
     activeNetworks.delete(networkKey);
   }
-}
-
-/**
- * Load network configuration from YAML
- */
-function loadNetworkConfig() {
-  try {
-    const configPath = path.join(process.cwd(), 'public', 'network-config.yaml');
-    const fileContents = fs.readFileSync(configPath, 'utf8');
-    return yaml.load(fileContents) as any;
-  } catch (error) {
-    console.warn('Could not load network config from YAML');
-    return { networks: [] };
-  }
-}
-
-/**
- * Get network RPC URL from YAML config
- */
-function getNetworkRpcUrl(networkKey: string): string | null {
-  const config = loadNetworkConfig();
-  const network = config.networks?.find((n: any) => n.key === networkKey);
-  return network?.rpcUrls?.[0] || null;
 }
 
 /**
@@ -329,9 +305,13 @@ export async function executeHardhatTask(options: HardhatTaskOptions): Promise<H
       console.log(`🚀 Executing Hardhat task: ${options.task} on ${options.network}`);
 
       // Log available networks from YAML
-      const yamlConfig = loadNetworkConfig();
-      const availableNetworks = yamlConfig.networks?.map((n: any) => n.key) || [];
-      console.log(`📡 Available networks from YAML: ${availableNetworks.join(', ')}`);
+      try {
+        const allNetworks = loadAllNetworksSync();
+        const availableNetworks = allNetworks.map((n) => n.key);
+        console.log(`📡 Available networks from YAML: ${availableNetworks.join(', ')}`);
+      } catch (error) {
+        console.warn('Could not load network config for logging');
+      }
       
       // Execute with timeout
       const { stdout, stderr } = await execAsync(command, { 
@@ -415,16 +395,20 @@ export function validateHardhatEnv(privateKey?: string): Record<string, string> 
  * Get available networks from YAML config
  */
 export function getAvailableNetworks(): string[] {
-  const config = loadNetworkConfig();
-  return config.networks?.map((n: any) => n.key) || [];
+  try {
+    const allNetworks = loadAllNetworksSync();
+    return allNetworks.map((n) => n.key);
+  } catch (error) {
+    console.warn('Could not load network config from YAML');
+    return [];
+  }
 }
 
 /**
  * Get block explorer URL for a contract address on a specific network
  */
 export function getBlockExplorerUrl(networkKey: string, contractAddress: string): string | null {
-  const config = loadNetworkConfig();
-  const network = config.networks?.find((n: any) => n.key === networkKey);
+  const network = findNetworkByKeySync(networkKey);
   
   if (!network?.blockExplorer?.url) {
     return null;
@@ -437,7 +421,6 @@ export function getBlockExplorerUrl(networkKey: string, contractAddress: string)
  * Get network display name from network key
  */
 export function getNetworkDisplayName(networkKey: string): string {
-  const config = loadNetworkConfig();
-  const network = config.networks?.find((n: any) => n.key === networkKey);
+  const network = findNetworkByKeySync(networkKey);
   return network?.name || networkKey;
 } 

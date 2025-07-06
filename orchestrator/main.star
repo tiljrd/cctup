@@ -1,66 +1,86 @@
+
 def run(plan, args):
-    env = args.get("env", "main")
+    env = args.get("env", "dev")
     
     ethereum = import_module("github.com/LZeroAnalytics/ethereum-package@{}/main.star".format(env))
     graph = import_module("github.com/LZeroAnalytics/graph-package@{}/main.star".format(env))
 
-    rpc_url = args.get("rpc_url")
-    if not rpc_url:
-        plan.print("Spinning up Ethereum network")
-        ethereum_args = args.get("ethereum_args", {})
-        ethereum_args["env"] = env
-        ethereum_output = ethereum.run(plan, ethereum_args)
-        first = ethereum_output.all_participants[0]
-        rpc_url = "http://{}:{}".format(first.el_context.ip_addr, first.el_context.rpc_port_num)
+    blockscout_port = 3333
+    network_results = []
+    forked_networks = []
+    existing_networks = args.get("existing_networks", [])
+    for existing_network in existing_networks:
+        forked_network = existing_network["forked_network"]
+
+        if not forked_network:
+            ethereum_args = args.get("ethereum_args", {})
+            ethereum_args["network_params"]["network_id"] = str(existing_network["id"])
+            ethereum_args["participants"][0]["el_extra_env_vars"]["FORKING_RPC_URL"] = existing_network["fork_url"]
+            ethereum_args["blockscout_params"]["service_name_suffix"] = existing_network["key"]
+            ethereum_args["blockscout_params"]["port_frontend_override"] = blockscout_port
+            blockscout_port += 1
+
+            plan.print("Spinning up Ethereum network")
+            ethereum_args["env"] = env
+            ethereum_output = ethereum.run(plan, ethereum_args)
+            first = ethereum_output.all_participants[0]
+            network_results.append(ethereum_output)
+            forked_network = create_forked_network_object(plan, ethereum_output, existing_network, ethereum_args)
+
+        forked_networks.append(forked_network)
+        
+        plan.print("Using RPC URL: {}".format(forked_network["rpcUrls"][0]))
+
+        plan.print("Rendering firehose template with RPC: {}".format(forked_network["rpcUrls"][0]))
+        firehose_config = plan.render_templates(
+            config={
+                "firehose.yaml": struct(
+                    template=read_file("templates/firehose.yaml.tmpl"),
+                    data={
+                        "rpc_url": forked_network["rpcUrls"][0]
+                    }
+                )
+            },
+            name="firehose-config"+forked_network["key"]
+        )
+
+        plan.print("Starting firehose container")
+        firehose_service = plan.add_service(
+            name="firehose-"+forked_network["key"],
+            config=ServiceConfig(
+                image="tiljordan/firehose:1.0.0",
+                ports={
+                    "grpc": PortSpec(number=9000, transport_protocol="TCP", wait="1m"),
+                    "api": PortSpec(number=10015, transport_protocol="TCP", wait="1m")
+                },
+                files = {
+                    "/tmp/config/": firehose_config
+                },
+                cmd=["start", "-c", "/tmp/config/firehose.yaml", "--advertise-block-features=base"]
+            )
+        )
+
+        plan.print("Starting substream container")
+        firehose_grpc_url = "{}:9000".format(firehose_service.ip_address)
+        
+        substream_service = plan.add_service(
+            name="substream-"+forked_network["key"],
+            config=ServiceConfig(
+                image="tiljordan/substreams:1.0.0",
+                cmd=[
+                    "/bin/sh", "-c", "cd /app && substreams run map_transactions -e {} --plaintext".format(firehose_grpc_url)
+                ],
+            )
+        )
     
-    plan.print("Using RPC URL: {}".format(rpc_url))
+    rpc_urls = {}
+    for forked_network in forked_networks:
+        rpc_urls[forked_network["key"]] = forked_network["rpcUrls"][0]
 
     plan.print("Spinning up Graph package")
     ethereum_args = args.get("ethereum_args", {})
     network_type = args.get("network_type", "bloctopus")
-    graph_services = graph.run(plan, ethereum_args, network_type=network_type, rpc_url=rpc_url, env=env)
-
-    plan.print("Rendering firehose template with RPC: {}".format(rpc_url))
-    firehose_config = plan.render_templates(
-        config={
-            "firehose.yaml": struct(
-                template=read_file("templates/firehose.yaml.tmpl"),
-                data={
-                    "rpc_url": rpc_url
-                }
-            )
-        },
-        name="firehose-config"
-    )
-
-    plan.print("Starting firehose container")
-    firehose_service = plan.add_service(
-        name="firehose",
-        config=ServiceConfig(
-            image="tiljordan/firehose:1.0.0",
-            ports={
-                "grpc": PortSpec(number=9000, transport_protocol="TCP", wait="1m"),
-                "api": PortSpec(number=10015, transport_protocol="TCP", wait="1m")
-            },
-            files = {
-                "/tmp/config/": firehose_config
-            },
-            cmd=["start", "-c", "/tmp/config/firehose.yaml", "--advertise-block-features=base"]
-        )
-    )
-
-    plan.print("Starting substream container")
-    firehose_grpc_url = "{}:9000".format(firehose_service.ip_address)
-    
-    substream_service = plan.add_service(
-        name="substream",
-        config=ServiceConfig(
-            image="tiljordan/substreams:1.0.0",
-            cmd=[
-                "/bin/sh", "-c", "cd /app && substreams run map_transactions -e {} --plaintext".format(firehose_grpc_url)
-            ],
-        )
-    )
+    graph_services = graph.run(plan, ethereum_args, network_type=network_type, rpc_urls=rpc_urls, env=env) #TODO: modify package to use multiple rpc urls rpc_urls 
 
     plan.print("Deploying subgraph with substream data source")
     
@@ -70,12 +90,73 @@ def run(plan, args):
     plan.print("Subgraph deployment placeholder - would deploy to: {}".format(graph_node_url))
     plan.print("IPFS endpoint: http://{}:5001".format(graph_services.ipfs.ip_address))
     
+    
+    plan.print("Spinning up CCTUP UI")
+    tomls_art = plan.render_templates(
+        name   = "network-configs",
+        config = {
+            "/generated-network-config.yaml": struct(
+                template = read_file("../templates/cctup-networks-configs-template.yaml"),
+                data = {
+                    "ForkedNetworks": forked_networks,
+                    "ExistingNetworks": existing_networks
+                }
+            )
+        }
+    )
+    cctup_ui_service = plan.add_service(
+        name="cctup-ui",
+        config=ServiceConfig(
+            image="fravlaca/cctup-ui:1.0.0",
+            env_vars = {
+                "NEXT_PUBLIC_CCIP_CONFIG_FILE": "/generated-network-config.yaml",
+                "HARDHAT_PRIVATE_KEY": args["deployer_private_key"]
+            },
+            ports={
+                "http": PortSpec(number=3001, transport_protocol="TCP", wait="1m")
+            },
+            files = {
+                "/public": tomls_art
+            }
+        )
+    )
+
     plan.print("CCTUP Orchestrator deployment complete")
     
     return struct(
-        ethereum_rpc=rpc_url,
+        forked_networks=forked_networks,
+        existing_networks=existing_networks,
         graph_services=graph_services,
         firehose=firehose_service,
         substream=substream_service,
         graph_endpoint=graph_node_url
     )
+
+
+
+
+def create_forked_network_object(ethereum_output, existing_network, ethereum_args):
+    # Get the RPC URL from the ethereum output
+    network_fork = {
+        "id": ethereum_output.network_id,
+        "key": existing_network["fork"],
+        "name": existing_network["name"] + " Fork",
+        "nativeCurrency": {
+            "name": "Ethereum",
+            "symbol": "ETH",
+            "decimals": 18
+        },
+        "rpcUrls": [ethereum_output.all_participants[0].el_context.rpc_http_url],
+        "blockExplorer": {
+            "name": "blockscout",
+            "apiURL": ethereum_output.blockscout_sc_verifier_url,
+            "url": blockscout_url
+        },
+        "testnet": True,
+        "chainSelector": existing_network["chainSelector"],
+        "linkContract": existing_network["linkContract"],
+        "routerAddress": existing_network["routerAddress"],
+        "logoURL": "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/ethereum.svg?auto=compress%2Cformat",
+        "forked-from": existing_network["key"]
+    }
+    return network_fork
