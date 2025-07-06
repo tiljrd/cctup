@@ -5,12 +5,14 @@ export class TxRecord {
     kind: string;
     raw: Raw | null;
     decoded: Decoded | null;
+    network: string;
 
-    constructor(id: Bytes, kind: string, raw: Raw | null, decoded: Decoded | null) {
+    constructor(id: Bytes, kind: string, raw: Raw | null, decoded: Decoded | null, network: string) {
         this.id = id;
         this.kind = kind;
         this.raw = raw;
         this.decoded = decoded;
+        this.network = network;
     }
 }
 

@@ -27,6 +27,7 @@ fn map_transactions(block: eth::Block) -> Result<TxRecords, Error> {
                 tx_type: transaction.r#type as u32,
             }),
             decoded: None, // Will be populated by ABI fetcher later
+            network: "mainnet".to_string(), // TODO: Make this configurable for multiple networks
         };
 
         records.records.push(record);
