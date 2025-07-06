@@ -19,21 +19,32 @@ function tryDecodeTransactionData(data: Bytes, to: Bytes): DecodedData | null {
     return null;
   }
 
-  const selector = data.toHexString().slice(0, 10);
-  
-  const knownSelectors = getKnownSelectors();
-  const signature = knownSelectors.get(selector);
-  
-  if (signature) {
-    log.info("Decoded transaction with selector {} to signature {}", [selector, signature]);
-    return new DecodedData(
-      signature,
-      "[]", 
-      "builtin"
-    );
-  }
+  try {
+    const hexString = data.toHexString();
+    if (!hexString || hexString.length < 10) {
+      log.warning("Invalid hex string from transaction data: {}", [hexString || "null"]);
+      return null;
+    }
+    
+    const selector = hexString.slice(0, 10);
+    
+    const knownSelectors = getKnownSelectors();
+    const signature = knownSelectors.get(selector);
+    
+    if (signature) {
+      log.info("Decoded transaction with selector {} to signature {}", [selector, signature]);
+      return new DecodedData(
+        signature,
+        "[]", 
+        "builtin"
+      );
+    }
 
-  return null;
+    return null;
+  } catch (error) {
+    log.warning("Error decoding transaction data: {}", [error.toString()]);
+    return null;
+  }
 }
 
 function getKnownSelectors(): Map<string, string> {
@@ -62,43 +73,109 @@ function getKnownSelectors(): Map<string, string> {
 }
 
 export function handleBlock(params: TxRecords): void {
+  if (!params || !params.records) {
+    log.warning("handleBlock called with null or missing records", []);
+    return;
+  }
+
   for (let i = 0; i < params.records.length; i++) {
     const rec = params.records[i];
     if (!rec) {
+      log.warning("Skipping null record at index {}", [i.toString()]);
       continue;
     }
 
     if (!rec.raw) {
+      log.warning("Skipping record {} with missing raw data", [rec.id ? rec.id.toHexString() : "unknown"]);
       continue;
     }
 
-    let tx = new Transaction(rec.id);
-    tx.kind = rec.kind.toString();
-    tx.from = rec.raw!.from as Bytes;
-    tx.to = rec.raw!.to as Bytes | null;
-    tx.value = BigInt.fromString(rec.raw!.value);
-    tx.gasLimit = BigInt.fromString(rec.raw!.gas_limit);
-    tx.gasPrice = rec.raw!.gas_price ? BigInt.fromString(rec.raw!.gas_price) : null;
-    tx.maxFeePerGas = rec.raw!.max_fee_per_gas ? BigInt.fromString(rec.raw!.max_fee_per_gas) : null;
-    tx.maxPriorityFeePerGas = rec.raw!.max_priority_fee_per_gas
-      ? BigInt.fromString(rec.raw!.max_priority_fee_per_gas)
-      : null;
-    tx.accessList = rec.raw!.access_list;
-    tx.data = rec.raw!.data;
-
-    if (rec.decoded) {
-      tx.fnSig = rec.decoded!.fn_sig;
-      tx.args = rec.decoded!.args_json;
-      tx.abiSource = rec.decoded!.abi_source;
-    } else if (rec.raw!.data && rec.raw!.data.length > 2) {
-      const decodedData = tryDecodeTransactionData(rec.raw!.data, rec.raw!.to);
-      if (decodedData) {
-        tx.fnSig = decodedData.fnSig;
-        tx.args = decodedData.args;
-        tx.abiSource = decodedData.abiSource;
-      }
+    if (!rec.id) {
+      log.warning("Skipping record with missing id", []);
+      continue;
     }
 
-    tx.save();
+    try {
+      let tx = new Transaction(rec.id);
+      
+      tx.kind = rec.kind ? rec.kind.toString() : "unknown";
+      
+      if (!rec.raw.from) {
+        log.warning("Transaction {} missing from address, skipping", [rec.id.toHexString()]);
+        continue;
+      }
+      tx.from = rec.raw.from as Bytes;
+      
+      tx.to = rec.raw.to ? (rec.raw.to as Bytes) : null;
+      
+      try {
+        tx.value = rec.raw.value ? BigInt.fromString(rec.raw.value) : BigInt.fromI32(0);
+      } catch (error) {
+        log.warning("Failed to parse value for transaction {}: {}, using 0", [rec.id.toHexString(), rec.raw.value || "null"]);
+        tx.value = BigInt.fromI32(0);
+      }
+      
+      try {
+        tx.gasLimit = rec.raw.gas_limit ? BigInt.fromString(rec.raw.gas_limit) : BigInt.fromI32(0);
+      } catch (error) {
+        log.warning("Failed to parse gas_limit for transaction {}: {}, using 0", [rec.id.toHexString(), rec.raw.gas_limit || "null"]);
+        tx.gasLimit = BigInt.fromI32(0);
+      }
+      
+      if (rec.raw.gas_price) {
+        try {
+          tx.gasPrice = BigInt.fromString(rec.raw.gas_price);
+        } catch (error) {
+          log.warning("Failed to parse gas_price for transaction {}: {}, using null", [rec.id.toHexString(), rec.raw.gas_price]);
+          tx.gasPrice = null;
+        }
+      } else {
+        tx.gasPrice = null;
+      }
+      
+      if (rec.raw.max_fee_per_gas) {
+        try {
+          tx.maxFeePerGas = BigInt.fromString(rec.raw.max_fee_per_gas);
+        } catch (error) {
+          log.warning("Failed to parse max_fee_per_gas for transaction {}: {}, using null", [rec.id.toHexString(), rec.raw.max_fee_per_gas]);
+          tx.maxFeePerGas = null;
+        }
+      } else {
+        tx.maxFeePerGas = null;
+      }
+      
+      if (rec.raw.max_priority_fee_per_gas) {
+        try {
+          tx.maxPriorityFeePerGas = BigInt.fromString(rec.raw.max_priority_fee_per_gas);
+        } catch (error) {
+          log.warning("Failed to parse max_priority_fee_per_gas for transaction {}: {}, using null", [rec.id.toHexString(), rec.raw.max_priority_fee_per_gas]);
+          tx.maxPriorityFeePerGas = null;
+        }
+      } else {
+        tx.maxPriorityFeePerGas = null;
+      }
+      
+      tx.accessList = rec.raw.access_list || "";
+      tx.data = rec.raw.data || Bytes.empty();
+
+      if (rec.decoded && rec.decoded.fn_sig && rec.decoded.args_json && rec.decoded.abi_source) {
+        tx.fnSig = rec.decoded.fn_sig;
+        tx.args = rec.decoded.args_json;
+        tx.abiSource = rec.decoded.abi_source;
+      } else if (rec.raw.data && rec.raw.data.length > 2 && rec.raw.to) {
+        const decodedData = tryDecodeTransactionData(rec.raw.data, rec.raw.to);
+        if (decodedData) {
+          tx.fnSig = decodedData.fnSig;
+          tx.args = decodedData.args;
+          tx.abiSource = decodedData.abiSource;
+        }
+      }
+
+      tx.save();
+      
+    } catch (error) {
+      log.error("Failed to process transaction {}: {}", [rec.id.toHexString(), error.toString()]);
+      continue;
+    }
   }
 }
