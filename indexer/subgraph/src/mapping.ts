@@ -6,6 +6,10 @@ export function handleBlock(params: TxRecords): void {
   for (let i = 0; i < params.records.length; i++) {
     const rec = params.records[i];
 
+    if (!rec.raw) {
+      continue;
+    }
+
     let tx = new Transaction(rec.id);
     tx.kind = rec.kind.toString();
     tx.from = rec.raw!.from as Bytes;
