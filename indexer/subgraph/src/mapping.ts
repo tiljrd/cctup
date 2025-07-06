@@ -15,6 +15,7 @@ export function handleBlock(params: TxRecords): void {
 
     let tx = new Transaction(rec.id);
     tx.kind = rec.kind.toString();
+    tx.network = rec.network;
     tx.from = rec.raw!.from as Bytes;
     tx.to = rec.raw!.to as Bytes | null;
     tx.value = BigInt.fromString(rec.raw!.value);

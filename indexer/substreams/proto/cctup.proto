@@ -11,6 +11,7 @@ message TxRecord {
   string kind = 2;
   Raw raw = 3;
   optional Decoded decoded = 4;
+  string network = 5;
 }
 
 message Raw {

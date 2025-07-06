@@ -1,6 +1,7 @@
 type Transaction @entity {
   id: Bytes!        # tx hash
   kind: String!     # enum as string
+  network: String!  # network identifier
   from: Bytes!
   to: Bytes
   value: BigInt!
