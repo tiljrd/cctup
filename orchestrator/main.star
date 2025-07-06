@@ -149,10 +149,51 @@ def run(plan, args):
     )
     
     # Get graph-node endpoint from graph services
-    graph_node_url = "http://{}:8000".format(graph_services.graph.ip_address)
-    
-    plan.print("Subgraph deployment placeholder - would deploy to: {}".format(graph_node_url))
-    plan.print("IPFS endpoint: http://{}:5001".format(graph_services.ipfs.ip_address))
+    graph_node_url = "http://{}:8020".format(graph_services.graph.ip_address)
+
+    # Add indexer service for subgraph deployment
+    indexer_service = plan.add_service(
+        name="indexer",
+        config=ServiceConfig(
+            image="tiljordan/cctup-indexer:1.0.0",
+            env_vars={
+                "GRAPH_NODE_URL": graph_node_url,
+                "IPFS_URL": "http://{}:5001".format(graph_services.ipfs.ip_address)
+            }
+        )
+    )
+
+    rpc_recipe = GetHttpRequestRecipe(
+        endpoint="/",
+        port_id="rpc",
+    )
+    plan.wait(
+        service_name="graph-node",
+        recipe=rpc_recipe,
+        field="code",
+        assertion="==",
+        target_value=405,
+        interval="2s",
+        timeout="2m",
+        description="Waiting for Graph node to be available"
+    )
+
+    # Deploy subgraph to graph node
+    plan.print("Creating subgraph in graph node: {}".format(graph_node_url))
+    plan.exec(
+        service_name="indexer",
+        recipe=ExecRecipe(
+            command=["sh", "-c", "cd /app/subgraph && graph create --node {} cctup/indexer".format(graph_node_url)]
+        )
+    )
+
+    plan.print("Deploying subgraph to graph node: {}".format(graph_node_url))
+    plan.exec(
+        service_name="indexer",
+        recipe=ExecRecipe(
+            command=["sh", "-c", "cd /app/subgraph && graph deploy --node {} --ipfs http://{}:5001 --version-label v0.0.1 cctup/indexer".format(graph_node_url, graph_services.ipfs.ip_address)]
+        )
+    )
     
     plan.print("CCTUP Orchestrator deployment complete")
     

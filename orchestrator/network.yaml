@@ -11,3 +11,5 @@ ethereum_args:
     seconds_per_slot: 4
   faucet_params:
     private_key: 1cdf65ac75f477650040ebe272ddaffb6735dcf55bd651869963ada71944e6db
+  additional_services:
+    - faucet
