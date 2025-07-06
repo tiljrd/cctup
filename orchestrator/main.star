@@ -41,7 +41,7 @@ def run(plan, args):
     firehose_service = plan.add_service(
         name="firehose",
         config=ServiceConfig(
-            image="tiljordan/firehose:1.0.0",
+            image="ghcr.io/streamingfast/firehose-ethereum:latest",
             ports={
                 "grpc": PortSpec(number=9000, transport_protocol="TCP", wait="1m"),
                 "api": PortSpec(number=10015, transport_protocol="TCP", wait="1m")
@@ -49,6 +49,7 @@ def run(plan, args):
             files = {
                 "/tmp/config/": firehose_config
             },
+            entrypoint = ["firecore"],
             cmd=["start", "-c", "/tmp/config/firehose.yaml", "--advertise-block-features=base"]
         )
     )
