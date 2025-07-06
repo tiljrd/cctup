@@ -12,7 +12,7 @@ def run(plan, args):
 
         if not forked_network:
             ethereum_args = args.get("ethereum_args", {})
-            ethereum_args["network_params"]["network_id"] = existing_network["id"]
+            ethereum_args["network_params"]["network_id"] = str(existing_network["id"])
             ethereum_args["participants"][0]["el_extra_env_vars"]["FORKING_RPC_URL"] = existing_network["fork_url"]
 
             plan.print("Spinning up Ethereum network")
@@ -36,12 +36,12 @@ def run(plan, args):
                     }
                 )
             },
-            name="firehose-config"+forked_network["key"]
+            name="firehose-config-"+forked_network["key"].lower()
         )
 
         plan.print("Starting firehose container")
         firehose_service = plan.add_service(
-            name="firehose-"+forked_network["key"],
+            name="firehose-"+forked_network["key"].lower(),
             config=ServiceConfig(
                 image="tiljordan/firehose:1.0.0",
                 ports={
@@ -59,7 +59,7 @@ def run(plan, args):
         firehose_grpc_url = "{}:9000".format(firehose_service.ip_address)
         
         substream_service = plan.add_service(
-            name="substream-"+forked_network["key"],
+            name="substream-"+forked_network["key"].lower(),
             config=ServiceConfig(
                 image="tiljordan/substreams:1.0.0",
                 cmd=[
@@ -75,15 +75,41 @@ def run(plan, args):
     plan.print("Spinning up Graph package")
     ethereum_args = args.get("ethereum_args", {})
     network_type = args.get("network_type", "bloctopus")
-    graph_services = graph.run(plan, ethereum_args, network_type=network_type, rpc_urls=rpc_urls, env=env) #TODO: modify package to use multiple rpc urls rpc_urls 
+    graph_services = graph.run(plan, ethereum_args, network_type=network_type, env=env) 
 
     plan.print("Deploying subgraph with substream data source")
     
     # Get graph-node endpoint from graph services
     graph_node_url = "http://{}:8000".format(graph_services.graph.ip_address)
     
-    plan.print("Subgraph deployment placeholder - would deploy to: {}".format(graph_node_url))
-    plan.print("IPFS endpoint: http://{}:5001".format(graph_services.ipfs.ip_address))
+    # Add indexer service for subgraph deployment
+    indexer_service = plan.add_service(
+        name="indexer",
+        config=ServiceConfig(
+            image="tiljordan/cctup-indexer:1.0.0",
+            env_vars={
+                "GRAPH_NODE_URL": graph_node_url,
+                "IPFS_URL": "http://{}:5001".format(graph_services.ipfs.ip_address)
+            }
+        )
+    )
+    
+    # Deploy subgraph to graph node
+    plan.print("Creating subgraph in graph node: {}".format(graph_node_url))
+    plan.exec(
+        service_name="indexer",
+        recipe=ExecRecipe(
+            command=["sh", "-c", "cd /app/subgraph && npm run create-local -- --node {} cctup/indexer".format(graph_node_url.replace("8000", "8020"))]
+        )
+    )
+    
+    plan.print("Deploying subgraph to graph node: {}".format(graph_node_url))
+    plan.exec(
+        service_name="indexer", 
+        recipe=ExecRecipe(
+            command=["sh", "-c", "cd /app/subgraph && npm run deploy-local -- --node {} --ipfs http://{}:5001 cctup/indexer".format(graph_node_url.replace("8000", "8020"), graph_services.ipfs.ip_address)]
+        )
+    )
     
     
     plan.print("Spinning up CCTUP UI")
@@ -91,10 +117,10 @@ def run(plan, args):
         name   = "network-configs",
         config = {
             "/generated-network-config.yaml": struct(
-                template = read_file("../templates/cctup-networks-configs-template.yaml"),
+                template = read_file("cctup-networks-configs-template.yaml"),
                 data = {
                     "ForkedNetworks": forked_networks,
-                    "ExistingNetworks": existing_networks
+                    "ExistingNetworks": args.get("existing_networks", [])
                 }
             )
         }
@@ -119,11 +145,12 @@ def run(plan, args):
     plan.print("CCTUP Orchestrator deployment complete")
     
     return struct(
-        ethereum_rpc=rpc_url,
+        ethereum_rpc=rpc_urls,
         graph_services=graph_services,
         firehose=firehose_service,
         substream=substream_service,
-        graph_endpoint=graph_node_url
+        graph_endpoint=graph_node_url,
+        indexer=indexer_service
     )
 
 
