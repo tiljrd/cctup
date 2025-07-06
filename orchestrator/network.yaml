@@ -1,6 +1,6 @@
 existing_networks:
   - id: 296
-    key: "hedera-testnet"
+    key: "hederaTestnet"
     name: "Hedera Testnet"
     nativeCurrency:
       name: "HBAR"
@@ -18,7 +18,7 @@ existing_networks:
     chainSelector: "222782988166878823"
     linkContract: "0x326C977E6efc84E512bB9C30f76E30c160eD06FB"
     routerAddress: "0x802C5F84eAD128Ff36fD6a3f8a418e339f467Ce4"
-    fork: "hederaFork"
+    fork: "hedera"
     fork_url: http://52.19.17.250:7546/
     forked_network:
           id: 296
@@ -44,7 +44,7 @@ existing_networks:
           forked-from: hederaTestnet
 
   - id: 11155112
-    key: "sepolia"
+    key: "sepoliaTestnet"
     name: "Sepolia"
     nativeCurrency:
       name: "Ethereum"
@@ -62,11 +62,11 @@ existing_networks:
     chainSelector: "16015286601757825753"
     linkContract: "0x779877A7B0D9E8603169DdbD7836e478b4624789"
     routerAddress: "0x0BF3dE8c5D3e8A2B34D2BEeB17ABfCeBaf363A59"
-    fork: "sepoliaFork"
+    fork: "sepolia"
     fork_url: https://eth-sepolia.g.alchemy.com/v2/lC2HDPB2Vs7-p-UPkgKD-VqFulU5elyk
     forked_network:
           id: 11155112
-          key: "sepoliaFork"
+          key: "sepolia"
           name: "Sepolia Fork"
           nativeCurrency:
             name: "ETH"
@@ -85,7 +85,7 @@ existing_networks:
           chainSelector: "16140901064496236767"
           linkContract: "0x514910771AF9Ca656af840dff83E8264EcF986CA"
           routerAddress: "0xb8B3670E18F88BA5187010AA7Ab809f06A1228e2"
-          forked-from: sepolia
+          forked-from: sepoliaTestnet
 
 ethereum_args:
   participants:
