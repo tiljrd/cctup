@@ -31,8 +31,6 @@ def run(plan, args):
             network_results.append(ethereum_output)
             forked_network = create_forked_network_object(plan, ethereum_output, existing_network, ethereum_args)
 
-        forked_networks.append(forked_network)
-
         plan.print("Using RPC URL: {}".format(forked_network["rpcUrls"][0]))
 
         plan.print("Rendering firehose template with RPC: {}".format(forked_network["rpcUrls"][0]))
@@ -48,24 +46,30 @@ def run(plan, args):
             name="firehose-config"+forked_network["key"]
         )
 
-    plan.print("Starting firehose container")
-    firehose_service = plan.add_service(
-        name="firehose",
-        config=ServiceConfig(
-            image="ghcr.io/streamingfast/firehose-ethereum:latest",
-            ports={
-                "grpc": PortSpec(number=9000, transport_protocol="TCP", wait="1m"),
-                "api": PortSpec(number=10015, transport_protocol="TCP", wait="1m")
-            },
-            files = {
-                "/tmp/config/": firehose_config
-            },
-            entrypoint = ["fireeth"],
-            cmd=["start", "-c", "/tmp/config/firehose.yaml", "--advertise-block-features=base"]
-        )
-    )
+        plan.print("Starting firehose container")
 
-    plan.print("Deploying subgraph with substream data source")
+        firehose_service = plan.add_service(
+            name="firehose"+forked_network["key"],
+            config=ServiceConfig(
+                image="ghcr.io/streamingfast/firehose-ethereum:latest",
+                ports={
+                    "grpc": PortSpec(number=9000, transport_protocol="TCP", wait="1m"),
+                    "api": PortSpec(number=10015, transport_protocol="TCP", wait="1m")
+                },
+                files={
+                    "/tmp/config/": firehose_config
+                },
+                entrypoint=["fireeth"],
+                cmd=["start", "-c", "/tmp/config/firehose.yaml", "--advertise-block-features=base"]
+            )
+        )
+
+        forked_network["substreams_grpc"] = "http://{}:9000".format(firehose_service.ip_address)
+        forked_network["substreams_token"] = ""
+        forked_network["firehose_grpc"] = "http://{}:10015".format(firehose_service.ip_address)
+        forked_network["firehose_token"] = ""
+
+        forked_networks.append(forked_network)
 
     postgres_output = postgres.run(
         plan,
@@ -100,27 +104,17 @@ def run(plan, args):
     ipfs_ip = ipfs_output.ip_address
     ipfs_url = "{}:5001".format(ipfs_ip)
 
-    networks = [
-        struct(
-            name = "mainnet",
-            substreams_grpc = "http://{}:9000".format(firehose_service.ip_address),
-            substreams_token = "",
-            firehose_grpc = "http://{}:10015".format(firehose_service.ip_address),
-            firehose_token = ""
-        )
-    ]
-
     graph_node_config = plan.render_templates(
         config={
             "config.toml": struct(
                 template = read_file("templates/config.toml.tmpl"),
-                data     = { "networks": networks },
+                data     = { "networks": forked_networks },
             )
         },
         name="graph-node-config",
     )
 
-    chain_names = [n.name for n in networks]
+    chain_names = [n["key"] for n in forked_networks]
     disable_check_list = ",".join(chain_names)
     graph_output = plan.add_service(
         name="graph-node",
@@ -243,7 +237,6 @@ def run(plan, args):
         forked_networks=forked_networks,
         existing_networks=existing_networks,
         graph_services=graph_services,
-        firehose=firehose_service,
         graph_endpoint=graph_node_url
     )
 
@@ -265,7 +258,7 @@ def create_forked_network_object(ethereum_output, existing_network, ethereum_arg
         "blockExplorer": {
             "name": "blockscout",
             "apiURL": ethereum_output.blockscout_sc_verifier_url,
-            "url": blockscout_url
+            "url": ethereum_args["blockscout_url"]
         },
         "testnet": True,
         "chainSelector": existing_network["chainSelector"],

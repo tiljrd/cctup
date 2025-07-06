@@ -7,13 +7,13 @@ pool_size  = 10
 ingestor = "block_ingestor_node"
 
 {{- range .networks }}
-[chains.{{ .name }}]
+[chains.{{ .key }}]
 shard    = "primary"
 protocol = "ethereum"
 
 provider = [
-  { label = "substreams-{{ .name }}", details = { type = "substreams", url = "{{ .substreams_grpc }}", token = "{{ .substreams_token }}", features = [] } },
-  { label = "firehose-{{ .name }}", details = { type = "firehose", url = "{{ .firehose_grpc }}", token = "{{ .firehose_token }}", features = ["compression"] } }
+  { label = "substreams-{{ .key }}", details = { type = "substreams", url = "{{ .substreams_grpc }}", token = "{{ .substreams_token }}", features = [] } },
+  { label = "firehose-{{ .key }}", details = { type = "firehose", url = "{{ .firehose_grpc }}", token = "{{ .firehose_token }}", features = ["compression"] } }
 ]
 {{- end }}
 
