@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { WizardData } from "@/app/ccip-js/multi-chain-wizard/page";
 import { loadForkedNetworks, loadExistingNetworks, getBlockExplorerUrl as getExplorerUrl } from '@/config/unifiedConfigLoader';
@@ -29,7 +29,7 @@ function useForkedNetworks() {
         const forkedNetworks = await loadForkedNetworks();
         
         const networkOptions = forkedNetworks
-          .filter(network => existingNetworks.some(bn => bn.key === network.forkedFrom))
+          .filter(network => existingNetworks.some(bn => bn.fork === network.key))
           .map(network => ({
             key: network.key,
             name: network.name,
@@ -570,7 +570,7 @@ export function ReviewAndSimulateStep({ wizardData, onSimulateStart, setWizardDa
 // Step 5: Simulate Execution
 interface SimulateExecutionStepProps {
   wizardData: WizardData;
-  setWizardData: (data: WizardData) => void;
+  setWizardData: React.Dispatch<React.SetStateAction<WizardData>>;
 }
 
 export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExecutionStepProps) {
@@ -595,13 +595,13 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
       console.log('🚀 Initiating deployment process...');
       deploymentInProgress.current = true;
       setDeploymentStarted(true);
-      setWizardData({
-        ...wizardData,
+      setWizardData((prevData: WizardData) => ({
+        ...prevData,
         deploymentStarted: true
-      });
+      }));
       deployMultiChain();
     }
-  }, []); // Empty dependency array - only run once on mount
+  }, [wizardData.configurationComplete, wizardData.deploymentStarted, deploymentStarted]); // Add proper dependencies
 
   const deployMultiChain = async () => {
     try {
@@ -616,10 +616,10 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
         return acc;
       }, {} as WizardData['deploymentResults']);
 
-      setWizardData({
-        ...wizardData,
+      setWizardData((prevData: WizardData) => ({
+        ...prevData,
         deploymentResults: initialResults
-      });
+      }));
 
       // Track results locally to avoid stale state issues
       const localResults: WizardData['deploymentResults'] = {};
@@ -667,15 +667,14 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
               }
             });
             
-            // Update React state - get current state first
-            const currentWizardData = wizardData; // This will be stale, but we need it for other fields
-            setWizardData({
-              ...currentWizardData,
+            // Update React state using functional setter to avoid stale closure
+            setWizardData((prevData: WizardData) => ({
+              ...prevData,
               deploymentResults: {
-                ...currentWizardData.deploymentResults,
+                ...prevData.deploymentResults,
                 [chainKey]: localResults[chainKey]
               }
-            });
+            }));
           } else {
             throw new Error(result.error || 'Deployment failed');
           }
@@ -689,13 +688,13 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
             configurationStatus: {}
           };
           
-          setWizardData({
-            ...wizardData,
+          setWizardData((prevData: WizardData) => ({
+            ...prevData,
             deploymentResults: {
-              ...wizardData.deploymentResults,
+              ...prevData.deploymentResults,
               [chainKey]: localResults[chainKey]
             }
-          });
+          }));
         }
       });
 
@@ -709,10 +708,10 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
       console.log(`📊 Deployment summary: ${successfulDeployments}/${wizardData.selectedChains.length} chains deployed successfully`);
       
       // Update final state with all results
-      setWizardData({
-        ...wizardData,
+      setWizardData((prevData: WizardData) => ({
+        ...prevData,
         deploymentResults: localResults
-      });
+      }));
       
       if (successfulDeployments >= 2) {
         console.log('🔗 Starting cross-chain configuration...');
@@ -723,12 +722,12 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
       } else {
         console.log('⚠️ Insufficient successful deployments for cross-chain configuration');
         setCurrentPhase('completed');
-        setWizardData({
-          ...wizardData,
+        setWizardData((prevData: WizardData) => ({
+          ...prevData,
           deploymentResults: localResults,
           configurationComplete: false,
           deploymentStarted: true // Prevent re-trigger
-        });
+        }));
       }
     } catch (error) {
       console.error('❌ Multi-chain deployment error:', error);
@@ -794,7 +793,19 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
           }
         };
         
-        setWizardData(currentVerificationData);
+        setWizardData((prevData: WizardData) => ({
+          ...prevData,
+          deploymentResults: {
+            ...prevData.deploymentResults,
+            [chainKey]: {
+              ...prevData.deploymentResults[chainKey],
+              verificationStatus: {
+                token: 'success',
+                pool: 'success'
+              }
+            }
+          }
+        }));
         console.log(`✅ Verification complete for ${chainKey}`);
         
       } catch (error) {
@@ -813,7 +824,19 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
           }
         };
         
-        setWizardData(currentVerificationData);
+        setWizardData((prevData: WizardData) => ({
+          ...prevData,
+          deploymentResults: {
+            ...prevData.deploymentResults,
+            [chainKey]: {
+              ...prevData.deploymentResults[chainKey],
+              verificationStatus: {
+                token: 'error',
+                pool: 'error'
+              }
+            }
+          }
+        }));
       }
     });
     
@@ -872,22 +895,25 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
       setCurrentPhase('completed');
       
       // Update state with local results and mark as complete
-      const finalWizardData = {
-        ...wizardData,
-        deploymentResults: {
-          ...wizardData.deploymentResults,
-          ...localResults
-        },
-        configurationComplete: true,
-        deploymentStarted: true, // Ensure this remains true
-        verificationStarted: false // Initialize verification
-      };
-      setWizardData(finalWizardData);
-      
-      // Start verification after configuration is complete
-      setTimeout(() => {
-        startVerification(finalWizardData);
-      }, 1000);
+      setWizardData((prevData: WizardData) => {
+        const finalWizardData = {
+          ...prevData,
+          deploymentResults: {
+            ...prevData.deploymentResults,
+            ...localResults
+          },
+          configurationComplete: true,
+          deploymentStarted: true, // Ensure this remains true
+          verificationStarted: false // Initialize verification
+        };
+        
+        // Start verification after configuration is complete
+        setTimeout(() => {
+          startVerification(finalWizardData);
+        }, 1000);
+        
+        return finalWizardData;
+      });
       
     } catch (error) {
       console.error('❌ Configuration error:', error);
@@ -1780,4 +1806,4 @@ function ConfigurationTxLink({ txHash, networkKey }: ConfigurationTxLinkProps) {
       {txHash.slice(0, 10)}...
     </a>
   );
-} 
+}                    
