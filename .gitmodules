@@ -1,3 +1,6 @@
 [submodule "webapp/src/ccip-starter-kit-hardhat"]
 	path = webapp/src/ccip-starter-kit-hardhat
 	url = https://github.com/fraVlaca/ccip-starter-kit-hardhat.git
+[submodule "webapp/src/src"]
+	path = webapp/src/src
+	url = https://github.com/fraVlaca/ccip-starter-kit-hardhat.git
