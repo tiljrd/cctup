@@ -5,6 +5,9 @@ import { Bytes, BigInt } from "@graphprotocol/graph-ts";
 export function handleBlock(params: TxRecords): void {
   for (let i = 0; i < params.records.length; i++) {
     const rec = params.records[i];
+    if (!rec) {
+      continue;
+    }
 
     if (!rec.raw) {
       continue;
