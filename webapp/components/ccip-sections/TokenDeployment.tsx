@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { loadBloctopusNetworks } from '@/config/unifiedConfigLoader';
+import { loadForkedNetworks } from '@/config/unifiedConfigLoader';
 
 interface DeploymentResult {
   success: boolean;
@@ -28,9 +28,9 @@ function useAvailableNetworks() {
   useEffect(() => {
     async function loadNetworks() {
       try {
-        const bloctopusNetworks = await loadBloctopusNetworks();
+        const forkedNetworks = await loadForkedNetworks();
         
-        const networkOptions = bloctopusNetworks.map((network) => ({
+        const networkOptions = forkedNetworks.map((network) => ({
           key: network.key,
           name: network.name,
           chainSelector: network.chainSelector || '',

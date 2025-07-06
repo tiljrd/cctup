@@ -28,7 +28,7 @@ export async function loadNetworkConfig(): Promise<{
     const routerAddresses: AddressMap = {};
     const chainSelectors: Record<number, string> = {};
 
-    // Process all networks (bloctopusNetworks + existingNetworks)
+    // Process all networks (forkedNetworks + existingNetworks)
     for (const network of allNetworks) {
       // Check if chain exists in viem/chains
       const existingChain = Object.values(viemChains).find(

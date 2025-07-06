@@ -40,10 +40,16 @@ export interface WizardData {
       configurationTransactions?: {
         [targetChain: string]: string;
       };
+      // Verification status for each contract
+      verificationStatus?: {
+        token: 'pending' | 'verifying' | 'success' | 'error';
+        pool: 'pending' | 'verifying' | 'success' | 'error';
+      };
     };
   };
   configurationComplete: boolean;
   deploymentStarted: boolean; // Flag to prevent re-deployment
+  verificationStarted: boolean; // Flag to track verification progress
   simulationComplete: boolean;
   replayDocument?: any; // Generated from indexer after simulation
 }
@@ -73,6 +79,7 @@ function MultiChainWizardContent() {
     deploymentResults: {},
     configurationComplete: false,
     deploymentStarted: false,
+    verificationStarted: false,
     simulationComplete: false,
   });
 

@@ -32,20 +32,20 @@ export function loadFullConfigSync(): YamlConfig {
 }
 
 /**
- * Load only bloctopusNetworks (most common use case)
+ * Load only forkedNetworks (most common use case)
  */
 export function loadBloctopusNetworksSync(): YamlNetwork[] {
   const config = loadFullConfigSync();
-  return config.bloctopusNetworks || [];
+  return config.forkedNetworks || [];
 }
 
 /**
- * Load all networks (bloctopusNetworks + existingNetworks)
+ * Load all networks (forkedNetworks + existingNetworks)
  * Used primarily by hardhat to configure all available networks
  */
 export function loadAllNetworksSync(): YamlNetwork[] {
   const config = loadFullConfigSync();
-  return [...(config.bloctopusNetworks || []), ...(config.existingNetworks || [])];
+  return [...(config.forkedNetworks || []), ...(config.existingNetworks || [])];
 }
 
 /**

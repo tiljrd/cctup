@@ -35,7 +35,7 @@ export interface YamlToken {
 }
 
 export interface YamlConfig {
-  bloctopusNetworks: YamlNetwork[];
+  forkedNetworks: YamlNetwork[];
   existingNetworks: YamlNetwork[];
   tokens: YamlToken[];
 }
@@ -76,11 +76,11 @@ export async function loadFullConfig(): Promise<YamlConfig> {
 }
 
 /**
- * Load only bloctopusNetworks (most common use case)
+ * Load only forkedNetworks (most common use case)
  */
-export async function loadBloctopusNetworks(): Promise<YamlNetwork[]> {
+export async function loadForkedNetworks(): Promise<YamlNetwork[]> {
   const config = await loadFullConfig();
-  return config.bloctopusNetworks || [];
+  return config.forkedNetworks || [];
 }
 
 export async function loadExistingNetworks(): Promise<YamlNetwork[]> {
@@ -89,12 +89,12 @@ export async function loadExistingNetworks(): Promise<YamlNetwork[]> {
 }
 
 /**
- * Load all networks (bloctopusNetworks + existingNetworks)
+ * Load all networks (forkedNetworks + existingNetworks)
  * Used primarily by hardhat to configure all available networks
  */
 export async function loadAllNetworks(): Promise<YamlNetwork[]> {
   const config = await loadFullConfig();
-  return [...(config.bloctopusNetworks || []), ...(config.existingNetworks || [])];
+  return [...(config.forkedNetworks || []), ...(config.existingNetworks || [])];
 }
 
 /**

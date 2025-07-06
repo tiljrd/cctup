@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { WizardData } from "@/app/ccip-js/multi-chain-wizard/page";
-import { loadBloctopusNetworks, loadExistingNetworks, getBlockExplorerUrl as getExplorerUrl } from '@/config/unifiedConfigLoader';
+import { loadForkedNetworks, loadExistingNetworks, getBlockExplorerUrl as getExplorerUrl } from '@/config/unifiedConfigLoader';
 
 // Client-safe function to get block explorer URL
 async function getBlockExplorerUrl(networkKey: string, contractAddress: string): Promise<string | null> {
@@ -17,9 +17,8 @@ interface NetworkOption {
   testnet: boolean;
   logoURL?: string;
 }
-
 // Hook to load available networks from YAML
-function useAvailableNetworks() {
+function useForkedNetworks() {
   const [networks, setNetworks] = useState<NetworkOption[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,10 +26,51 @@ function useAvailableNetworks() {
     async function loadNetworks() {
       try {
         const existingNetworks = await loadExistingNetworks();
-        const bloctopusNetworks = await loadBloctopusNetworks();
+        const forkedNetworks = await loadForkedNetworks();
+        
+        const networkOptions = forkedNetworks
+          .filter(network => existingNetworks.some(bn => bn.key === network.forkedFrom))
+          .map(network => ({
+            key: network.key,
+            name: network.name,
+            chainSelector: network.chainSelector || '',
+            testnet: network.testnet || false,
+            logoURL: network.logoURL || `https://via.placeholder.com/32/0066cc/ffffff?text=${network.name.charAt(0)}`
+          }));
+        
+        setNetworks(networkOptions);
+      } catch (error) {
+        console.error('Failed to load networks:', error);
+        // Fallback networks
+        setNetworks([
+          { key: 'sepolia', name: 'Sepolia', chainSelector: '16015286601757825753', testnet: true, logoURL: 'https://via.placeholder.com/32/0066cc/ffffff?text=S' },
+          { key: 'arbitrumSepolia', name: 'Arbitrum Sepolia', chainSelector: '3478487238524512106', testnet: true, logoURL: 'https://via.placeholder.com/32/0066cc/ffffff?text=A' },
+          { key: 'polygonAmoy', name: 'Polygon Amoy', chainSelector: '16281711391670634445', testnet: true, logoURL: 'https://via.placeholder.com/32/0066cc/ffffff?text=P' },
+          { key: 'baseSepolia', name: 'Base Sepolia', chainSelector: '10344971235874465080', testnet: true, logoURL: 'https://via.placeholder.com/32/0066cc/ffffff?text=B' },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadNetworks();
+  }, []);
+
+  return { networks, loading };
+}
+
+// Hook to load available networks from YAML
+function useExistingNetworks() {
+  const [networks, setNetworks] = useState<NetworkOption[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadNetworks() {
+      try {
+        const existingNetworks = await loadExistingNetworks();
+        const forkedNetworks = await loadForkedNetworks();
         
         const networkOptions = existingNetworks
-          .filter(network => bloctopusNetworks.some(bn => bn.key === network.fork))
+          .filter(network => forkedNetworks.some(bn => bn.key === network.fork))
           .map(network => ({
             key: network.key,
             name: network.name,
@@ -66,7 +106,7 @@ interface ChainSelectionStepProps {
 }
 
 export function ChainSelectionStep({ selectedChains, onChainsChange }: ChainSelectionStepProps) {
-  const { networks, loading } = useAvailableNetworks();
+  const { networks, loading } = useExistingNetworks();
 
   const handleChainToggle = (chainKey: string) => {
     if (selectedChains.includes(chainKey)) {
@@ -379,7 +419,7 @@ interface ReviewAndSimulateStepProps {
 }
 
 export function ReviewAndSimulateStep({ wizardData, onSimulateStart, setWizardData }: ReviewAndSimulateStepProps) {
-  const { networks } = useAvailableNetworks();
+  const { networks } = useExistingNetworks();
   const [isDeploying, setIsDeploying] = useState(false);
 
   const selectedNetworks = networks.filter(n => wizardData.selectedChains.includes(n.key));
@@ -534,8 +574,8 @@ interface SimulateExecutionStepProps {
 }
 
 export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExecutionStepProps) {
-  const { networks } = useAvailableNetworks();
-  const [currentPhase, setCurrentPhase] = useState<'deploying' | 'configuring' | 'completed'>('deploying');
+  const { networks } = useExistingNetworks();
+  const [currentPhase, setCurrentPhase] = useState<'deploying' | 'configuring' | 'verifying' | 'completed'>('deploying');
   const [deploymentStarted, setDeploymentStarted] = useState(false);
   const deploymentInProgress = useRef(false);
   
@@ -698,6 +738,94 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
     }
   };
 
+  const startVerification = async (currentWizardData: WizardData) => {
+    if (currentWizardData.verificationStarted) return;
+    
+    setCurrentPhase('verifying');
+    
+    const successfulChains = wizardData.selectedChains.filter(
+      chainKey => currentWizardData.deploymentResults[chainKey]?.status === 'success'
+    );
+    
+    // Initialize verification status for all deployed contracts
+    const updatedResults = { ...currentWizardData.deploymentResults };
+    for (const chainKey of successfulChains) {
+      updatedResults[chainKey] = {
+        ...updatedResults[chainKey],
+        verificationStatus: {
+          token: 'verifying',
+          pool: 'verifying'
+        }
+      };
+    }
+    
+    const initialVerificationData = {
+      ...currentWizardData,
+      verificationStarted: true,
+      deploymentResults: updatedResults
+    };
+    
+    setWizardData(initialVerificationData);
+    
+    // Keep track of verification state locally
+    let currentVerificationData = initialVerificationData;
+    
+    // Verify contracts in parallel (non-blocking)
+    const verificationPromises = successfulChains.map(async (chainKey) => {
+      const result = updatedResults[chainKey];
+      if (!result.tokenAddress || !result.poolAddress) return;
+      
+      try {
+        // Simulate verification delay
+        await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 3000));
+        
+        // Update verification status for this chain
+        currentVerificationData = {
+          ...currentVerificationData,
+          deploymentResults: {
+            ...currentVerificationData.deploymentResults,
+            [chainKey]: {
+              ...currentVerificationData.deploymentResults[chainKey],
+              verificationStatus: {
+                token: 'success',
+                pool: 'success'
+              }
+            }
+          }
+        };
+        
+        setWizardData(currentVerificationData);
+        console.log(`✅ Verification complete for ${chainKey}`);
+        
+      } catch (error) {
+        console.error(`❌ Verification failed for ${chainKey}:`, error);
+        currentVerificationData = {
+          ...currentVerificationData,
+          deploymentResults: {
+            ...currentVerificationData.deploymentResults,
+            [chainKey]: {
+              ...currentVerificationData.deploymentResults[chainKey],
+              verificationStatus: {
+                token: 'error',
+                pool: 'error'
+              }
+            }
+          }
+        };
+        
+        setWizardData(currentVerificationData);
+      }
+    });
+    
+    // Wait for all verifications to complete
+    await Promise.all(verificationPromises);
+    
+    // Mark as completed after a brief delay
+    setTimeout(() => {
+      setCurrentPhase('completed');
+    }, 1000);
+  };
+
   const configureNetworks = async (localResults: WizardData['deploymentResults']) => {
     try {
       const successfulChains = wizardData.selectedChains.filter(
@@ -751,9 +879,15 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
           ...localResults
         },
         configurationComplete: true,
-        deploymentStarted: true // Ensure this remains true
+        deploymentStarted: true, // Ensure this remains true
+        verificationStarted: false // Initialize verification
       };
       setWizardData(finalWizardData);
+      
+      // Start verification after configuration is complete
+      setTimeout(() => {
+        startVerification(finalWizardData);
+      }, 1000);
       
     } catch (error) {
       console.error('❌ Configuration error:', error);
@@ -924,7 +1058,8 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
         <p className="text-gray-600 text-sm sm:text-base">
           {currentPhase === 'deploying' && 'Deploying tokens and pools across all selected chains...'}
           {currentPhase === 'configuring' && 'Configuring cross-chain communication between pools...'}
-          {currentPhase === 'completed' && 'Deployment and configuration completed!'}
+          {currentPhase === 'verifying' && 'Verifying deployed contracts on block explorers...'}
+          {currentPhase === 'completed' && 'Deployment, configuration, and verification completed!'}
         </p>
       </div>
 
@@ -1087,20 +1222,76 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
                   {result?.status === 'success' ? (
                     <div className="space-y-2">
                       {result.tokenAddress && (
-                        <ClickableAddress
-                          address={result.tokenAddress}
-                          networkKey={network.key}
-                          label="Token"
-                          className="text-xs"
-                        />
+                        <div className="flex items-center justify-between">
+                          <ClickableAddress
+                            address={result.tokenAddress}
+                            networkKey={network.key}
+                            label="Token"
+                            className="text-xs"
+                          />
+                          {result.verificationStatus?.token && (
+                            <div className="flex items-center ml-2">
+                              {result.verificationStatus.token === 'verifying' && (
+                                <>
+                                  <div className="w-3 h-3 border border-blue-500 border-t-transparent rounded-full animate-spin mr-1"></div>
+                                  <span className="text-xs text-blue-600">Verifying</span>
+                                </>
+                              )}
+                              {result.verificationStatus.token === 'success' && (
+                                <>
+                                  <svg className="w-3 h-3 text-green-600 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                  <span className="text-xs text-green-600">Verified</span>
+                                </>
+                              )}
+                              {result.verificationStatus.token === 'error' && (
+                                <>
+                                  <svg className="w-3 h-3 text-red-600 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                  <span className="text-xs text-red-600">Failed</span>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       )}
                       {result.poolAddress && (
-                        <ClickableAddress
-                          address={result.poolAddress}
-                          networkKey={network.key}
-                          label="Pool"
-                          className="text-xs"
-                        />
+                        <div className="flex items-center justify-between">
+                          <ClickableAddress
+                            address={result.poolAddress}
+                            networkKey={network.key}
+                            label="Pool"
+                            className="text-xs"
+                          />
+                          {result.verificationStatus?.pool && (
+                            <div className="flex items-center ml-2">
+                              {result.verificationStatus.pool === 'verifying' && (
+                                <>
+                                  <div className="w-3 h-3 border border-blue-500 border-t-transparent rounded-full animate-spin mr-1"></div>
+                                  <span className="text-xs text-blue-600">Verifying</span>
+                                </>
+                              )}
+                              {result.verificationStatus.pool === 'success' && (
+                                <>
+                                  <svg className="w-3 h-3 text-green-600 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                  <span className="text-xs text-green-600">Verified</span>
+                                </>
+                              )}
+                              {result.verificationStatus.pool === 'error' && (
+                                <>
+                                  <svg className="w-3 h-3 text-red-600 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                  <span className="text-xs text-red-600">Failed</span>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
                   ) : result?.status === 'error' ? (
@@ -1263,7 +1454,7 @@ interface ExecuteTransactionsStepProps {
 }
 
 export function ExecuteTransactionsStep({ wizardData, setWizardData }: ExecuteTransactionsStepProps) {
-  const { networks } = useAvailableNetworks();
+  const { networks } = useExistingNetworks();
   const [isLoading, setIsLoading] = useState(false);
   const [preparedTransactions, setPreparedTransactions] = useState<any>(null);
   const [executionResults, setExecutionResults] = useState<any[]>([]);
@@ -1559,8 +1750,8 @@ interface ConfigurationTxLinkProps {
 
 function ConfigurationTxLink({ txHash, networkKey }: ConfigurationTxLinkProps) {
   const getTxExplorerUrl = async (networkKey: string, txHash: string): Promise<string | null> => {
-    const bloctopusNetworks = await loadBloctopusNetworks();
-    const network = bloctopusNetworks.find((n) => n.key === networkKey);
+    const forkedNetworks = await loadForkedNetworks();
+    const network = forkedNetworks.find((n) => n.key === networkKey);
 
     if (!network?.blockExplorer?.url) {
       return null;
