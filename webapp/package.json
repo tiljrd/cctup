@@ -4,8 +4,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "bdev": "pnpm run build-components && next dev",
-    "dev": "next dev",
+    "bdev": "pnpm run build-components && next dev -p 3000",
+    "dev": "next dev -p 3000",
     "build-ccip-js": "pnpm --filter ccip-js run build",
     "build-components": "pnpm --filter ccip-react-components run build",
     
@@ -14,7 +14,7 @@
     "prebuild": "pnpm run prepare-hardhat && pnpm run build-hardhat",
     
     "build": "pnpm build-ccip-js && pnpm build-components && next build",
-    "start": "next start",
+    "start": "next start -p 3000",
     "lint": "next lint",
     
     "dev-with-hardhat": "pnpm run prepare-hardhat && pnpm run build-hardhat && pnpm run dev",

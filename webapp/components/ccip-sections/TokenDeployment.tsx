@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import yaml from 'js-yaml';
+import { loadForkedNetworks } from '@/config/unifiedConfigLoader';
 
 interface DeploymentResult {
   success: boolean;
@@ -28,15 +28,9 @@ function useAvailableNetworks() {
   useEffect(() => {
     async function loadNetworks() {
       try {
-        const response = await fetch('/network-config.yaml');
-        if (!response.ok) {
-          throw new Error(`Failed to load network config: ${response.statusText}`);
-        }
+        const forkedNetworks = await loadForkedNetworks();
         
-        const yamlContent = await response.text();
-        const config = yaml.load(yamlContent) as any;
-        
-        const networkOptions = config.networks.map((network: any) => ({
+        const networkOptions = forkedNetworks.map((network) => ({
           key: network.key,
           name: network.name,
           chainSelector: network.chainSelector || '',
