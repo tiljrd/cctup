@@ -282,7 +282,7 @@ export interface HardhatTaskResult {
 export async function executeHardhatTask(options: HardhatTaskOptions): Promise<HardhatTaskResult> {
   const executeTask = async (): Promise<HardhatTaskResult> => {
     return executeWithRetry(async () => {
-      const hardhatDir = path.join(process.cwd(), 'src/ccip-starter-kit-hardhat');
+      const hardhatDir = path.join(process.cwd(), 'lib/ccip-starter-kit-hardhat');
       
       // Build command
       let command = `cd "${hardhatDir}" && npx hardhat ${options.task} --network ${options.network}`;

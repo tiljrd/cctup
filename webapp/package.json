@@ -9,8 +9,8 @@
     "build-ccip-js": "pnpm --filter ccip-js run build",
     "build-components": "pnpm --filter ccip-react-components run build",
     
-    "prepare-hardhat": "cd src/ccip-starter-kit-hardhat && npm install",
-    "build-hardhat": "cd src/ccip-starter-kit-hardhat && npx hardhat compile",
+    "prepare-hardhat": "cd lib/ccip-starter-kit-hardhat && npm install",
+    "build-hardhat": "cd lib/ccip-starter-kit-hardhat && npx hardhat compile",
     "prebuild": "pnpm run prepare-hardhat && pnpm run build-hardhat",
     
     "build": "pnpm build-ccip-js && pnpm build-components && next build",
@@ -18,7 +18,7 @@
     "lint": "next lint",
     
     "dev-with-hardhat": "pnpm run prepare-hardhat && pnpm run build-hardhat && pnpm run dev",
-    "clean-hardhat": "cd src/ccip-starter-kit-hardhat && rm -rf node_modules artifacts cache typechain-types"
+    "clean-hardhat": "cd lib/ccip-starter-kit-hardhat && rm -rf node_modules artifacts cache typechain-types"
   },
   "dependencies": {
     "@cct-ui/transaction-replayer": "file:../replayer",
