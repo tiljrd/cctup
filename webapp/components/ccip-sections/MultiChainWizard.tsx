@@ -579,7 +579,7 @@ interface SimulateExecutionStepProps {
   setWizardData: (data: WizardData) => void;
 }
 
-export function ExecutionStep({ wizardData, setWizardData }: SimulateExecutionStepProps) {
+export function SimulationStep({ wizardData, setWizardData }: SimulateExecutionStepProps) {
   const { networks: forkedNetworks } = useForkedNetworks();
   const { networks: existingNetworks } = useExistingNetworks();
   const [currentPhase, setCurrentPhase] = useState<'deploying' | 'configuring' | 'verifying' | 'completed'>('deploying');
@@ -1151,7 +1151,7 @@ export function ExecutionStep({ wizardData, setWizardData }: SimulateExecutionSt
   const configurationPhaseStatus = getConfigurationPhaseStatus();
 
   // Debug logging to understand the state
-  console.log('🔍 ExecutionStep Debug:', {
+  console.log('🔍 SimulationStep Debug:', {
     currentPhase,
     deploymentPhaseStatus,
     configurationPhaseStatus,
@@ -1529,25 +1529,7 @@ export function ExecutionStep({ wizardData, setWizardData }: SimulateExecutionSt
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Deployment Complete!</h3>
-            <p className="text-gray-600 text-sm sm:text-base mb-6 sm:mb-8 max-w-2xl mx-auto">
-              Your cross-chain token and pools have been successfully deployed and configured across all selected chains.
-              All contracts have been automatically verified on their respective block explorers.
-            </p>
-            <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4 max-w-md mx-auto">
-              <Link 
-                href="/ccip-js/execution"
-                className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors text-center"
-              >
-                Test Cross-Chain Transfer
-              </Link>
-              <Link 
-                href="/ccip-js/monitoring"
-                className="w-full sm:w-auto px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors text-center"
-              >
-                Monitor Deployments
-              </Link>
-            </div>
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Simulation Complete!</h3>
           </div>
         </div>
       )}
@@ -1556,7 +1538,7 @@ export function ExecutionStep({ wizardData, setWizardData }: SimulateExecutionSt
 }
 
 
-export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExecutionStepProps) {
+export function ExecutionStep({ wizardData, setWizardData }: SimulateExecutionStepProps) {
   const { networks } = useExistingNetworks();
   const [currentPhase, setCurrentPhase] = useState<'deploying' | 'configuring' | 'verifying' | 'completed'>('deploying');
   const [deploymentStarted, setDeploymentStarted] = useState(false);
@@ -1569,7 +1551,7 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
 
   // Reset deployment state when component first mounts
   useEffect(() => {
-    console.log('🔄 SimulateExecutionStep mounted - resetting deployment state');
+    console.log('🔄 ExecutionStep mounted - resetting deployment state');
     setWizardData({
       ...wizardData,
       deploymentStarted: false,
@@ -2161,7 +2143,7 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
   const configurationPhaseStatus = getConfigurationPhaseStatus();
 
   // Debug logging to understand the state
-  console.log('🔍 SimulateExecutionStep Debug:', {
+  console.log('🔍 ExecutionStep Debug:', {
     currentPhase,
     deploymentPhaseStatus,
     configurationPhaseStatus,
