@@ -9,7 +9,8 @@ import {
   TokenConfigurationStep,
   PoolTypeSelectionStep,
   ReviewAndSimulateStep,
-  SimulateExecutionStep,
+  ExecutionStep,
+  SimulationStep,
   ExecuteTransactionsStep
 } from "@/components/ccip-sections/MultiChainWizard";
 
@@ -47,10 +48,12 @@ export interface WizardData {
       };
     };
   };
-  configurationComplete: boolean;
-  deploymentStarted: boolean; // Flag to prevent re-deployment
+  configurationComplete: boolean; // For simulation completion
+  deploymentStarted: boolean; // Flag to prevent re-deployment in simulation
   verificationStarted: boolean; // Flag to track verification progress
   simulationComplete: boolean;
+  actualExecutionComplete: boolean; // For actual testnet execution completion
+  actualExecutionStarted: boolean; // Flag to prevent re-deployment in actual execution
   replayDocument?: any; // Generated from indexer after simulation
 }
 
@@ -81,6 +84,8 @@ function MultiChainWizardContent() {
     deploymentStarted: false,
     verificationStarted: false,
     simulationComplete: false,
+    actualExecutionStarted: false,
+    actualExecutionComplete: false,
   });
 
   const getCurrentStepIndex = () => WIZARD_STEPS.findIndex(step => step.id === currentStep);
@@ -152,20 +157,72 @@ function MultiChainWizardContent() {
         );
       case 'simulate':
         return (
-          <SimulateExecutionStep
+          <SimulationStep
             wizardData={wizardData}
             setWizardData={setWizardData}
           />
         );
       case 'execute':
         return (
-          <ExecuteTransactionsStep
+          <ExecutionStep
             wizardData={wizardData}
             setWizardData={setWizardData}
           />
         );
       default:
         return null;
+    }
+  };
+
+  // Add this helper function
+  const isStepCompleted = (stepId: string) => {
+    const currentIndex = getCurrentStepIndex();
+    
+    switch (stepId) {
+      case 'chains':
+        return wizardData.selectedChains.length >= 2;
+      case 'token':
+        return wizardData.tokenConfig.name && wizardData.tokenConfig.symbol;
+      case 'pool':
+        return wizardData.poolType && currentIndex > 2; // Only complete if we've moved past it
+      case 'review':
+        return currentIndex > 3; // Only complete if we've moved past it
+      case 'simulate':
+        return wizardData.configurationComplete; // Fork simulation complete
+      case 'execute':
+        return wizardData.simulationComplete; // Use simulationComplete instead
+      default:
+        return false;
+    }
+  };
+
+  // Then update the progress indicator logic to use this function
+  const getStepStatus = (step: any, index: number) => {
+    const currentIndex = getCurrentStepIndex();
+    const stepCompleted = isStepCompleted(step.id);
+    
+    if (currentIndex === index && !stepCompleted) {
+      return 'bg-blue-600 text-white'; // Current step, not completed
+    } else if (currentIndex > index || stepCompleted) {
+      return 'bg-green-500 text-white'; // Completed step
+    } else {
+      return 'bg-gray-200 text-gray-600'; // Future step
+    }
+  };
+
+  // And update the icon logic
+  const getStepIcon = (step: any, index: number) => {
+    const currentIndex = getCurrentStepIndex();
+    const stepCompleted = isStepCompleted(step.id);
+    
+    if (currentIndex > index || stepCompleted) {
+      return (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        </svg>
+      );
+    } else {
+      return <span>{index + 1}</span>;
     }
   };
 
@@ -219,19 +276,9 @@ function MultiChainWizardContent() {
                 {WIZARD_STEPS.map((step, index) => (
                   <div key={step.id} className="flex items-center">
                     <div className={`flex items-center justify-center w-8 h-8 rounded-full font-semibold text-sm ${
-                      getCurrentStepIndex() === index 
-                        ? 'bg-blue-600 text-white' 
-                        : getCurrentStepIndex() > index 
-                          ? 'bg-green-500 text-white' 
-                          : 'bg-gray-200 text-gray-600'
+                      getStepStatus(step, index)
                     }`}>
-                      {getCurrentStepIndex() > index ? (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : (
-                        <span>{index + 1}</span>
-                      )}
+                      {getStepIcon(step, index)}
                     </div>
                     <div className="ml-3 flex-1">
                       <h3 className={`text-sm font-medium ${
@@ -258,19 +305,9 @@ function MultiChainWizardContent() {
                   {WIZARD_STEPS.map((step, index) => (
                     <div key={step.id} className="flex items-center">
                       <div className={`flex items-center justify-center w-8 h-8 rounded-full font-semibold text-xs mr-3 ${
-                        getCurrentStepIndex() === index 
-                          ? 'bg-blue-600 text-white' 
-                          : getCurrentStepIndex() > index 
-                            ? 'bg-green-500 text-white' 
-                            : 'bg-gray-200 text-gray-600'
+                        getStepStatus(step, index)
                       }`}>
-                        {getCurrentStepIndex() > index ? (
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        ) : (
-                          <span>{index + 1}</span>
-                        )}
+                        {getStepIcon(step, index)}
                       </div>
                       <div className="min-w-0 flex-1">
                         <h3 className={`text-sm font-medium ${
@@ -298,19 +335,9 @@ function MultiChainWizardContent() {
                   {WIZARD_STEPS.map((step, index) => (
                     <div key={step.id} className="flex items-center">
                       <div className={`flex items-center justify-center w-8 h-8 rounded-full font-semibold text-xs mr-3 ${
-                        getCurrentStepIndex() === index 
-                          ? 'bg-blue-600 text-white' 
-                          : getCurrentStepIndex() > index 
-                            ? 'bg-green-500 text-white' 
-                            : 'bg-gray-200 text-gray-600'
+                        getStepStatus(step, index)
                       }`}>
-                        {getCurrentStepIndex() > index ? (
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        ) : (
-                          <span>{index + 1}</span>
-                        )}
+                        {getStepIcon(step, index)}
                       </div>
                       <div className="min-w-0 flex-1">
                         <h3 className={`text-sm font-medium ${
@@ -337,19 +364,9 @@ function MultiChainWizardContent() {
                   <div key={step.id} className="flex items-center flex-1">
                     <div className="flex items-center flex-1">
                       <div className={`flex items-center justify-center w-10 h-10 rounded-full font-semibold ${
-                        getCurrentStepIndex() === index 
-                          ? 'bg-blue-600 text-white' 
-                          : getCurrentStepIndex() > index 
-                            ? 'bg-green-500 text-white' 
-                            : 'bg-gray-200 text-gray-600'
+                        getStepStatus(step, index)
                       }`}>
-                        {getCurrentStepIndex() > index ? (
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        ) : (
-                          <span>{index + 1}</span>
-                        )}
+                        {getStepIcon(step, index)}
                       </div>
                       <div className="ml-3 min-w-0 flex-1">
                         <h3 className={`text-sm font-medium truncate ${

@@ -4,7 +4,7 @@ import path from 'path';
 
 export async function GET(request: NextRequest) {
   try {
-    const hardhatDir = path.join(process.cwd(), 'src/ccip-starter-kit-hardhat');
+    const hardhatDir = path.join(process.cwd(), 'lib/ccip-starter-kit-hardhat');
     
     // Check if Hardhat project exists
     await access(hardhatDir, constants.F_OK);

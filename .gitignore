@@ -51,7 +51,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
@@ -153,8 +152,8 @@ webapp/next-env.d.ts
 **/artifacts/
 **/cache/
 **/typechain-types/
-webapp/src/ccip-starter-kit-hardhat/artifacts/
-webapp/src/ccip-starter-kit-hardhat/cache/
+webapp/lib/ccip-starter-kit-hardhat/artifacts/
+webapp/lib/ccip-starter-kit-hardhat/cache/
 
 # Or if you move to root:
 # contracts/artifacts/

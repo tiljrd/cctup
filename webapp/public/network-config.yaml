@@ -1,28 +1,117 @@
-existing_networks:
-  - id: 296
+# CCIP Network Configuration
+# This file defines all supported networks, tokens, and CCIP-specific addresses
+forkedNetworks:
+  - id: 3151908
+    key: "hederaFork"
+    name: "Hedera Fork"
+    nativeCurrency:
+      name: "ETH"
+      symbol: "ETH"
+      decimals: 18
+    rpcUrls:
+      - "http://127.0.0.1:57360"
+    blockExplorer:
+      name: "blockscout"
+      apiURL: "http://127.0.0.1:57534/api"
+      url: "http://127.0.0.1:3333"
+      apiKey: "api-key"
+      logoURL: "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/ethereum.svg?auto=compress%2Cformat"
+    testnet: true
+    # Add these when available
+    chainSelector: "16140901064496236767"
+    linkContract: "0x514910771AF9Ca656af840dff83E8264EcF986CA"
+    routerAddress: "0xb8B3670E18F88BA5187010AA7Ab809f06A1228e2"
+    forkedFrom: hederaTestnet
+  - id: 3151909
+    key: "sepoliaFork"
+    name: "Sepolia Fork"
+    nativeCurrency:
+      name: "ETH"
+      symbol: "ETH"
+      decimals: 18
+    rpcUrls:
+      - "http://127.0.0.1:63225"
+    blockExplorer:
+      name: "blockscout"
+      apiURL: "http://127.0.0.1:63433/api"
+      url: "http://127.0.0.1:3334"
+      apiKey: "api-key"
+      logoURL: "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/ethereum.svg?auto=compress%2Cformat"
+    testnet: true
+    # Add these when available
+    chainSelector: "16140901064496236767"
+    linkContract: "0x514910771AF9Ca656af840dff83E8264EcF986CA"
+    routerAddress: "0xb8B3670E18F88BA5187010AA7Ab809f06A1228e2"
+    forkedFrom: sepolia
+
+
+    # non working ones 
+  - id: 7185899
+    key: "baseSepoliaFork"
+    name: "Base Sepolia Fork"
+    nativeCurrency:
+      name: "ETH"
+      symbol: "ETH"
+      decimals: 18
+    rpcUrls:
+      - "https://c494ad1d82924f3cbea4aa3ef63250f9-rpc.network.bloctopus.io"
+    blockExplorer:
+      name: "blockscout"
+      url: "https://2c500bb941b14a9a862964363a5dfc4f-faucet.network.bloctopus.io"
+      apiKey: "api-key"
+      logoURL: "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/ethereum.svg?auto=compress%2Cformat"
+    testnet: true
+    # Add these when available
+    chainSelector: "16140901064496236767"
+    linkContract: "0x514910771AF9Ca656af840dff83E8264EcF986CA"
+    routerAddress: "0xb8B3670E18F88BA5187010AA7Ab809f06A1228e2"
+    forked-from: baseSepolia
+  - id: 7185898
+    key: "optimismSepoliaFork"
+    name: "Optimism Sepolia Fork"
+    nativeCurrency:
+      name: "ETH"
+      symbol: "ETH"
+      decimals: 18
+    rpcUrls:
+      - "https://c494ad1d82924f3cbea4aa3ef63250f9-rpc.network.bloctopus.io"
+    blockExplorer:
+      name: "blockscout"
+      url: "https://2c500bb941b14a9a862964363a5dfc4f-faucet.network.bloctopus.io"
+      apiKey: "api-key"
+      logoURL: "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/ethereum.svg?auto=compress%2Cformat"
+    testnet: true
+    # Add these when available
+    chainSelector: "16140901064496236767"
+    linkContract: "0x514910771AF9Ca656af840dff83E8264EcF986CA"
+    routerAddress: "0xb8B3670E18F88BA5187010AA7Ab809f06A1228e2"
+    forked-from: optimismSepolia
+
+
+existingNetworks:
+  - id: 84532
     key: "hederaTestnet"
     name: "Hedera Testnet"
     nativeCurrency:
-      name: "HBAR"
-      symbol: "HBAR"
+      name: "ETH"
+      symbol: "ETH"
       decimals: 18
     rpcUrls:
-      - "https://testnet.hashio.io/api"
+      - "https://sepolia.base.org"
     blockExplorer:
       name: "HashScan"
-      apiURL: "https://server-verify.hashscan.io"
-      url: "https://hashscan.io/testnet"
+      apiURL: "https://api.etherscan.io/v2/api"
+      url: "https://sepolia.basescan.org"
       apiKey: "api-key"
     logoURL: "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/hedera.svg?auto=compress%2Cformat"
     testnet: true
-    chainSelector: "222782988166878823"
-    linkContract: "0x326C977E6efc84E512bB9C30f76E30c160eD06FB"
-    routerAddress: "0x802C5F84eAD128Ff36fD6a3f8a418e339f467Ce4"
-    fork: "hedera"
-    fork_url: http://52.19.17.250:7546/
+    chainSelector: "10344971235874465080"
+    linkContract: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410"
+    routerAddress: "0xD3b06cEbF099CE7DA4AcCf578aaebFDBd6e88a93"
+    fork: "hederaFork"
 
-  - id: 11155112
-    key: "sepoliaTestnet"
+  - id: 11155111
+    key: "sepolia"
     name: "Sepolia"
     nativeCurrency:
       name: "Ethereum"
@@ -40,50 +129,158 @@ existing_networks:
     chainSelector: "16015286601757825753"
     linkContract: "0x779877A7B0D9E8603169DdbD7836e478b4624789"
     routerAddress: "0x0BF3dE8c5D3e8A2B34D2BEeB17ABfCeBaf363A59"
-    fork: "sepolia"
-    fork_url: https://eth-sepolia.g.alchemy.com/v2/lC2HDPB2Vs7-p-UPkgKD-VqFulU5elyk
+    fork: "sepoliaFork"
+  
+  #non working ones
+  - id: 84532
+    key: "baseSepolia"
+    name: "Base Sepolia"
+    nativeCurrency:
+      name: "Ethereum"
+      symbol: "ETH"
+      decimals: 18
+    rpcUrls:
+      - "https://sepolia.base.org"
+    blockExplorer:
+      name: "etherscan"
+      apiURL: "https://api.etherscan.io/v2/api"
+      url: "https://sepolia.basescan.org"
+      apiKey: "api-key"
+    logoURL: "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/base.svg?auto=compress%2Cformat"
+    testnet: true
+    chainSelector: "10344971235874465080"
+    linkContract: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410"
+    routerAddress: "0xD3b06cEbF099CE7DA4AcCf578aaebFDBd6e88a93"
+    fork: "baseSepoliaFork"
 
-forked_networks:
-    - id: 11155112
-      key: "sepolia"
-      name: "Sepolia Fork"
-      nativeCurrency:
-        name: "ETH"
-        symbol: "ETH"
-        decimals: 18
-      rpcUrls:
-        - "http://host.docker.internal:51684"
-      blockExplorer:
-        name: "blockscout"
-        apiURL: "http://host.docker.internal:51737"
-        url: "http://localhost:3001"
-        apiKey: "api-key"
-        logoURL: "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/ethereum.svg?auto=compress%2Cformat"
-      testnet: true
-      # Add these when available
-      chainSelector: "16140901064496236767"
-      linkContract: "0x514910771AF9Ca656af840dff83E8264EcF986CA"
-      routerAddress: "0xb8B3670E18F88BA5187010AA7Ab809f06A1228e2"
-      forked-from: sepoliaTestnet
+  - id: 11155420
+    key: "optimismSepolia"
+    name: "Optimism Sepolia"
+    nativeCurrency:
+      name: "Ethereum"
+      symbol: "ETH"
+      decimals: 18
+    rpcUrls:
+      - "https://sepolia.optimism.io"
+    blockExplorer:
+      name: "etherscan"
+      apiURL: "https://api.etherscan.io/v2/api"
+      url: "https://sepolia-optimism.etherscan.io/"
+      apiKey: "api-key"
+    logoURL: "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/optimism.svg?auto=compress%2Cformat"
+    testnet: true
+    chainSelector: "5224473277236331295"
+    linkContract: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410"
+    routerAddress: "0x114a20a10b43d4115e5aeef7345a1a71d2a60c57"
+    fork: "optimismSepoliaFork"
 
-    - id: 296
-      key: "hedera"
-      name: "Hedera Fork"
-      nativeCurrency:
-        name: "ETH"
-        symbol: "ETH"
-        decimals: 18
-      rpcUrls:
-        - "http://host.docker.internal"
-      blockExplorer:
-        name: "blockscout"
-        apiURL: "http://host.docker.internal:51277"
-        url: "http://localhost:3000"
-        apiKey: "api-key"
-        logoURL: "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/ethereum.svg?auto=compress%2Cformat"
-      testnet: true
-      # Add these when available
-      chainSelector: "16140901064496236767"
-      linkContract: "0x514910771AF9Ca656af840dff83E8264EcF986CA"
-      routerAddress: "0xb8B3670E18F88BA5187010AA7Ab809f06A1228e2"
-      forked-from: hederaTestnet
+  - id: 80002
+    key: "polygonAmoy"
+    name: "Polygon Amoy"
+    nativeCurrency:
+      name: "MATIC"
+      symbol: "MATIC"
+      decimals: 18
+    rpcUrls:
+      - "https://rpc-amoy.polygon.technology"
+    blockExplorer:
+      name: "etherscan"
+      apiURL: "https://api.etherscan.io/v2/api"
+      url: "https://amoy.polygonscan.com"
+      apiKey: "api-key"
+    logoURL: "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/polygon.svg?auto=compress%2Cformat"
+    testnet: true
+    chainSelector: "16281711391670634445"
+    linkContract: "0x0Fd9e8d3aF1aaee056EB9e802c3A762a667b1904"
+    routerAddress: "0x9C32fCB86BF0f4a1A8921a9Fe46de3198bb884B2"
+    fork: "polygonAmoyFork"
+
+  - id: 97
+    key: "bscTestnet"
+    name: "BNB Smart Chain Testnet"
+    nativeCurrency:
+      name: "BNB"
+      symbol: "tBNB"
+      decimals: 18
+    rpcUrls:
+      - "https://data-seed-prebsc-1-s1.bnbchain.org:8545"
+    blockExplorer:
+      name: "etherscan"
+      apiURL: "https://api.etherscan.io/v2/api"
+      url: "https://testnet.bscscan.com"
+      apiKey: "api-key"
+    logoURL: "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/bsc.svg?auto=compress%2Cformat"
+    testnet: true
+    chainSelector: "13264668187771770619"
+    linkContract: "0x84b9B910527Ad5C03A9Ca831909E21e236EA7b06"
+    routerAddress: "0xE1053aE1857476f36A3C62580FF9b016E8EE8F6f"
+    fork: "bscTestnetFork"
+
+  - id: 43113
+    key: "avalancheFuji"
+    name: "Avalanche Fuji"
+    nativeCurrency:
+      name: "Avalanche"
+      symbol: "AVAX"
+      decimals: 18
+    rpcUrls:
+      - "https://api.avax-test.network/ext/bc/C/rpc"
+    blockExplorer:
+      name: "etherscan"
+      apiURL: "https://api.etherscan.io/v2/api"
+      url: "https://testnet.snowtrace.io"
+      apiKey: "api-key"
+    logoURL: "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/avalanche.svg?auto=compress%2Cformat"
+    testnet: true
+    chainSelector: "14767482510784806043"
+    linkContract: "0x0b9d5D9136855f6FEc3c0993feE6E9CE8a297846"
+    routerAddress: "0xF694E193200268f9a4868e4Aa017A0118C9a8177"
+    fork: "avalancheFujiFork"
+    #forked networks
+    
+
+tokens:
+  - symbol: "CCIP-BnM"
+    logoURL: "https://smartcontract.imgix.net/tokens/ccip-bnm.webp?auto=compress%2Cformat"
+    tags: ["chainlink", "default"]
+    addresses:
+      arbitrumSepolia: "0xA8C0c11bf64AF62CDCA6f93D3769B88BdD7cb93D"
+      avalancheFuji: "0xD21341536c5cF5EB1bcb58f6723cE26e8D8E90e4"
+      baseSepolia: "0x88A2d74F47a237a62e7A51cdDa67270CE381555e"
+      bscTestnet: "0xbFA2ACd33ED6EEc0ed3Cc06bF1ac38d22b36B9e9"
+      optimismSepolia: "0x8aF4204e30565DF93352fE8E1De78925F6664dA7"
+      polygonAmoy: "0xcab0EF91Bee323d1A617c0a027eE753aFd6997E4"
+      sepolia: "0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05"
+      hederaTestnet: "0x01Ac06943d2B8327a7845235Ef034741eC1Da352"
+
+  - symbol: "CCIP-LnM"
+    logoURL: "https://smartcontract.imgix.net/tokens/ccip-lnm.webp?auto=compress%2Cformat"
+    tags: ["chainlink", "default"]
+    addresses:
+      arbitrumSepolia: "0x139E99f0ab4084E14e6bb7DacA289a91a2d92927"
+      avalancheFuji: "0x70F5c5C40b873EA597776DA2C21929A8282A3b35"
+      baseSepolia: "0xA98FA8A008371b9408195e52734b1768c0d1Cb5c"
+      bscTestnet: "0x79a4Fc27f69323660f5Bfc12dEe21c3cC14f5901"
+      optimismSepolia: "0x044a6B4b561af69D2319A2f4be5Ec327a6975D0a"
+      polygonAmoy: "0x3d357fb52253e86c8Ee0f80F5FfE438fD9503FF2"
+      sepolia: "0x466D489b6d36E7E3b824ef491C225F5830E81cC1"
+
+  - symbol: "GHO"
+    logoURL: "https://smartcontract.imgix.net/tokens/gho.webp?auto=compress%2Cformat"
+    tags: ["stablecoin", "default"]
+    addresses:
+      arbitrumSepolia: "0xb13Cfa6f8B2Eed2C37fB00fF0c1A59807C585810"
+      avalancheFuji: "0x9c04928Cc678776eC1C1C0E46ecC03a5F47A7723"
+      baseSepolia: "0x7CFa3f3d1cded0Da930881c609D4Dbf0012c14Bb"
+      sepolia: "0xc4bF5CbDaBE595361438F8c6a187bDc330539c60"
+
+  - symbol: "USDC"
+    logoURL: "https://smartcontract.imgix.net/tokens/usdc.webp?auto=compress%2Cformat"
+    tags: ["stablecoin", "default"]
+    addresses:
+      arbitrumSepolia: "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d"
+      avalancheFuji: "0x5425890298aed601595a70AB815c96711a31Bc65"
+      baseSepolia: "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+      optimismSepolia: "0x5fd84259d66Cd46123540766Be93DFE6D43130D7"
+      polygonAmoy: "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582"
+      sepolia: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"

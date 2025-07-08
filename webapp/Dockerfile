@@ -9,10 +9,10 @@ WORKDIR /app
 # Stage 2: Install dependencies (including Hardhat deps)
 FROM base AS deps
 COPY package.json ./
-COPY src/ccip-starter-kit-hardhat/package.json ./src/ccip-starter-kit-hardhat/
+COPY lib/ccip-starter-kit-hardhat/package.json ./lib/ccip-starter-kit-hardhat/
 RUN pnpm install --frozen-lockfile
 # Install Hardhat dependencies
-RUN cd src/ccip-starter-kit-hardhat && npm install
+RUN cd lib/ccip-starter-kit-hardhat && npm install
 
 # Stage 3: Build the application
 FROM base AS builder
@@ -24,7 +24,7 @@ ENV NEXT_PUBLIC_CCIP_CONFIG_FILE=$NEXT_PUBLIC_CCIP_CONFIG_FILE
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/src/ccip-starter-kit-hardhat/node_modules ./src/ccip-starter-kit-hardhat/node_modules
+COPY --from=deps /app/lib/ccip-starter-kit-hardhat/node_modules ./lib/ccip-starter-kit-hardhat/node_modules
 
 # Copy source code
 COPY . .
@@ -49,7 +49,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Copy the entire Hardhat project for runtime task execution
-COPY --from=builder --chown=nextjs:nodejs /app/src/ccip-starter-kit-hardhat ./src/ccip-starter-kit-hardhat
+COPY --from=builder --chown=nextjs:nodejs /app/lib/ccip-starter-kit-hardhat ./lib/ccip-starter-kit-hardhat
 
 # Ensure the default config exists
 COPY --from=builder /app/public/network-config.yaml ./public/network-config.yaml
