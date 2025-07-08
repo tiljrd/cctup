@@ -599,9 +599,22 @@ export function ExecutionStep({ wizardData, setWizardData }: SimulateExecutionSt
   // Get the keys of the forked networks we'll deploy to
   const forkedChainKeys = selectedForkedNetworks.map(n => n.key);
 
+  // Synchronize currentPhase with wizardData completion state
   useEffect(() => {
+    if (wizardData.configurationComplete && currentPhase !== 'completed') {
+      setCurrentPhase('completed');
+    }
+  }, [wizardData.configurationComplete, currentPhase]);
+
+  useEffect(() => {
+    // STOP EVERYTHING if already complete
+    if (wizardData.configurationComplete) {
+      console.log('✋ Deployment already complete - doing nothing');
+      return;
+    }
+    
     // Only start deployment once and if not already started
-    if (wizardData.configurationComplete || deploymentInProgress.current) {
+    if (deploymentInProgress.current || currentPhase === 'completed') {
       return;
     }
        
@@ -615,7 +628,7 @@ export function ExecutionStep({ wizardData, setWizardData }: SimulateExecutionSt
       });
       deployMultiChain();
     }
-  }, [deploymentStarted, wizardData.deploymentStarted, forkedChainKeys.length]); 
+  }, [wizardData.configurationComplete, wizardData.deploymentStarted, forkedChainKeys.length]); // Add configurationComplete to dependencies 
 
   const deployMultiChain = async () => {
     try {
@@ -682,13 +695,13 @@ export function ExecutionStep({ wizardData, setWizardData }: SimulateExecutionSt
             });
             
             // Update React state
-            setWizardData(prevData => ({
-              ...prevData,
+            setWizardData({
+              ...wizardData,
               deploymentResults: {
-                ...prevData.deploymentResults,
+                ...wizardData.deploymentResults,
                 [chainKey]: localResults[chainKey]
               }
-            }));
+            });
           } else {
             throw new Error(result.error || 'Deployment failed');
           }
@@ -718,17 +731,28 @@ export function ExecutionStep({ wizardData, setWizardData }: SimulateExecutionSt
       // Check deployment status using local results
       const currentResults = Object.values(localResults);
       const successfulDeployments = currentResults.filter(r => r.status === 'success').length;
+      const failedDeployments = currentResults.filter(r => r.status === 'error').length;
       
-      console.log(`📊 Deployment summary: ${successfulDeployments}/${forkedChainKeys.length} forked chains deployed successfully`);
+      console.log(`📊 Deployment summary: ${successfulDeployments}/${forkedChainKeys.length} forked chains deployed successfully, ${failedDeployments} failed`);
       
       // Update final state with all results
-      setWizardData(prevData => ({
-        ...prevData,
+      setWizardData({
+        ...wizardData,
         deploymentResults: localResults
-      }));
+      });
       
-      if (successfulDeployments >= 2) {
-        console.log('🔗 Starting cross-chain configuration...');
+      // If ANY deployment failed, stop here and mark as completed with failure
+      if (failedDeployments > 0) {
+        console.log('❌ One or more deployments failed - stopping execution');
+        setCurrentPhase('completed');
+        setWizardData({
+          ...wizardData,
+          deploymentResults: localResults,
+          configurationComplete: false,
+          deploymentStarted: true
+        });
+      } else if (successfulDeployments === forkedChainKeys.length && successfulDeployments >= 2) {
+        console.log('🔗 All deployments successful - starting cross-chain configuration...');
         setCurrentPhase('configuring');
         
         // Pass local results and forked chain keys to configuration
@@ -736,12 +760,12 @@ export function ExecutionStep({ wizardData, setWizardData }: SimulateExecutionSt
       } else {
         console.log('⚠️ Insufficient successful deployments for cross-chain configuration');
         setCurrentPhase('completed');
-        setWizardData(prevData => ({
-          ...prevData,
+        setWizardData({
+          ...wizardData,
           deploymentResults: localResults,
           configurationComplete: false,
           deploymentStarted: true
-        }));
+        });
       }
     } catch (error) {
       console.error('❌ Multi-chain deployment error:', error);
@@ -947,10 +971,50 @@ export function ExecutionStep({ wizardData, setWizardData }: SimulateExecutionSt
       if (!result.tokenAddress || !result.poolAddress) return;
       
       try {
-        // Simulate verification delay
-        await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 3000));
+        console.log(`🔍 Starting verification for ${chainKey}...`);
         
-        // Update verification status for this chain
+        // Verify token contract
+        const tokenVerificationPromise = fetch('/api/hardhat/verify-contract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            network: chainKey,
+            address: result.tokenAddress,
+            constructorArgs: [
+              currentWizardData.tokenConfig.name,
+              currentWizardData.tokenConfig.symbol,
+              parseInt(currentWizardData.tokenConfig.decimals),
+              currentWizardData.tokenConfig.supply
+            ],
+            contractName: 'BurnMintERC677' // Adjust based on token type
+          })
+        });
+        
+        // Verify pool contract  
+        const poolVerificationPromise = fetch('/api/hardhat/verify-contract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            network: chainKey,
+            address: result.poolAddress,
+            constructorArgs: [result.tokenAddress], // Pool constructor args would need to be stored from deployment
+            contractName: currentWizardData.poolType === 'burnMint' ? 'BurnMintTokenPool' : 'LockReleaseTokenPool'
+          })
+        });
+        
+        // Execute verifications in parallel
+        const [tokenResponse, poolResponse] = await Promise.all([
+          tokenVerificationPromise,
+          poolVerificationPromise
+        ]);
+        
+        const tokenResult = await tokenResponse.json();
+        const poolResult = await poolResponse.json();
+        
+        // Update verification status based on results
+        const tokenStatus = tokenResult.success ? 'success' : 'error';
+        const poolStatus = poolResult.success ? 'success' : 'error';
+        
         currentVerificationData = {
           ...currentVerificationData,
           deploymentResults: {
@@ -958,15 +1022,20 @@ export function ExecutionStep({ wizardData, setWizardData }: SimulateExecutionSt
             [chainKey]: {
               ...currentVerificationData.deploymentResults[chainKey],
               verificationStatus: {
-                token: 'success',
-                pool: 'success'
+                token: tokenStatus,
+                pool: poolStatus
               }
             }
           }
         };
         
         setWizardData(currentVerificationData);
-        console.log(`✅ Verification complete for ${chainKey}`);
+        
+        if (tokenStatus === 'success' && poolStatus === 'success') {
+          console.log(`✅ Verification complete for ${chainKey}`);
+        } else {
+          console.log(`⚠️ Partial verification for ${chainKey}: token=${tokenStatus}, pool=${poolStatus}`);
+        }
         
       } catch (error) {
         console.error(`❌ Verification failed for ${chainKey}:`, error);
@@ -994,6 +1063,11 @@ export function ExecutionStep({ wizardData, setWizardData }: SimulateExecutionSt
     // Mark as completed after a brief delay
     setTimeout(() => {
       setCurrentPhase('completed');
+      // ADD THIS: Mark Step 6 as actually complete!
+      setWizardData(prev => ({
+        ...prev,
+        actualExecutionComplete: true
+      }));
     }, 1000);
   };
 
@@ -1026,6 +1100,9 @@ export function ExecutionStep({ wizardData, setWizardData }: SimulateExecutionSt
   };
 
   const getDeploymentPhaseStatus = () => {
+    // If everything is complete, deployments were successful
+    if (wizardData.configurationComplete) return 'success';
+    
     const results = Object.values(wizardData.deploymentResults);
     if (results.length === 0) return 'loading';
     if (results.some(r => r.status === 'error')) return 'error';
@@ -1034,8 +1111,16 @@ export function ExecutionStep({ wizardData, setWizardData }: SimulateExecutionSt
   };
 
   const getConfigurationPhaseStatus = () => {
+    // If everything is complete, configuration was successful
+    if (wizardData.configurationComplete) return 'success';
+    
+    // If currently configuring, show loading
     if (currentPhase === 'configuring') return 'loading';
-    if (currentPhase === 'completed') return 'success';
+    
+    // If deployments are successful but not configuring yet, show pending
+    const deploymentPhaseStatus = getDeploymentPhaseStatus();
+    if (deploymentPhaseStatus === 'success') return 'pending';
+    
     return 'pending';
   };
 
@@ -1064,6 +1149,15 @@ export function ExecutionStep({ wizardData, setWizardData }: SimulateExecutionSt
 
   const deploymentPhaseStatus = getDeploymentPhaseStatus();
   const configurationPhaseStatus = getConfigurationPhaseStatus();
+
+  // Debug logging to understand the state
+  console.log('🔍 ExecutionStep Debug:', {
+    currentPhase,
+    deploymentPhaseStatus,
+    configurationPhaseStatus,
+    configurationComplete: wizardData.configurationComplete,
+    deploymentResults: wizardData.deploymentResults
+  });
 
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 sm:p-6 lg:p-8">
@@ -1328,8 +1422,8 @@ export function ExecutionStep({ wizardData, setWizardData }: SimulateExecutionSt
                 </div>
               </div>
               
-              {/* Configuration Status */}
-              {result?.status === 'success' && totalTargets > 0 && (
+              {/* Configuration Status - only show if this deployment succeeded and no deployments failed */}
+              {result?.status === 'success' && totalTargets > 0 && !Object.values(wizardData.deploymentResults).some(r => r.status === 'error') && (
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700">Configuration</span>
@@ -1427,7 +1521,7 @@ export function ExecutionStep({ wizardData, setWizardData }: SimulateExecutionSt
         })}
       </div>
 
-      {currentPhase === 'completed' && (
+      {currentPhase === 'completed' && getDeploymentPhaseStatus() === 'success' && wizardData.configurationComplete && (
         <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-200">
           <div className="text-center">
             <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -1473,14 +1567,37 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
     wizardData.selectedChains.includes(network.key)
   );
 
+  // Reset deployment state when component first mounts
   useEffect(() => {
-    // Only start deployment once and if not already started
-    // Check if already complete first to avoid any re-triggers
-    if (wizardData.configurationComplete || deploymentInProgress.current) {
+    console.log('🔄 SimulateExecutionStep mounted - resetting deployment state');
+    setWizardData({
+      ...wizardData,
+      deploymentStarted: false,
+      actualExecutionComplete: false,
+      deploymentResults: {}
+    });
+  }, []); // Empty dependency array - only run once on mount
+
+  // Synchronize currentPhase with wizardData completion state
+  useEffect(() => {
+    if (wizardData.actualExecutionComplete && currentPhase !== 'completed') {
+      setCurrentPhase('completed');
+    }
+  }, [wizardData.actualExecutionComplete, currentPhase]);
+
+  useEffect(() => {
+    // STOP EVERYTHING if already complete
+    if (wizardData.actualExecutionComplete) {
+      console.log('✋ Actual execution already complete - doing nothing');
       return;
     }
     
-    if (!deploymentStarted && !wizardData.deploymentStarted) {
+    // Only start deployment once and if not already started
+    if (deploymentInProgress.current) {
+      return;
+    }
+    
+    if (!deploymentStarted && !wizardData.deploymentStarted && wizardData.selectedChains.length > 0) {
       console.log('🚀 Initiating deployment process...');
       deploymentInProgress.current = true;
       setDeploymentStarted(true);
@@ -1488,16 +1605,16 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
         ...wizardData,
         deploymentStarted: true
       });
-      deployMultiChain();
+      deployMultiChain(wizardData);
     }
-  }, []); // Empty dependency array - only run once on mount
+  }, [wizardData.actualExecutionComplete, wizardData.deploymentStarted, wizardData.selectedChains.length]); // Use actualExecutionComplete for actual execution
 
-  const deployMultiChain = async () => {
+  const deployMultiChain = async (currentWizardData: WizardData) => {
     try {
       console.log('🚀 Starting multi-chain deployment...');
       
       // Initialize results for all selected chains
-      const initialResults = wizardData.selectedChains.reduce((acc, chainKey) => {
+      const initialResults = currentWizardData.selectedChains.reduce((acc, chainKey) => {
         acc[chainKey] = { 
           status: 'pending' as const,
           configurationStatus: {}
@@ -1594,8 +1711,9 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
       // Check deployment status using local results
       const currentResults = Object.values(localResults);
       const successfulDeployments = currentResults.filter(r => r.status === 'success').length;
+      const failedDeployments = currentResults.filter(r => r.status === 'error').length;
       
-      console.log(`📊 Deployment summary: ${successfulDeployments}/${wizardData.selectedChains.length} chains deployed successfully`);
+      console.log(`📊 Deployment summary: ${successfulDeployments}/${wizardData.selectedChains.length} chains deployed successfully, ${failedDeployments} failed`);
       
       // Update final state with all results
       setWizardData({
@@ -1603,8 +1721,18 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
         deploymentResults: localResults
       });
       
-      if (successfulDeployments >= 2) {
-        console.log('🔗 Starting cross-chain configuration...');
+      // If ANY deployment failed, stop here and mark as completed with failure
+      if (failedDeployments > 0) {
+        console.log('❌ One or more deployments failed - stopping execution');
+        setCurrentPhase('completed');
+        setWizardData({
+          ...wizardData,
+          deploymentResults: localResults,
+          configurationComplete: false,
+          deploymentStarted: true
+        });
+      } else if (successfulDeployments === wizardData.selectedChains.length && successfulDeployments >= 2) {
+        console.log('🔗 All deployments successful - starting cross-chain configuration...');
         setCurrentPhase('configuring');
         
         // Pass local results to configuration
@@ -1665,10 +1793,50 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
       if (!result.tokenAddress || !result.poolAddress) return;
       
       try {
-        // Simulate verification delay
-        await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 3000));
+        console.log(`🔍 Starting verification for ${chainKey}...`);
         
-        // Update verification status for this chain
+        // Verify token contract
+        const tokenVerificationPromise = fetch('/api/hardhat/verify-contract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            network: chainKey,
+            address: result.tokenAddress,
+            constructorArgs: [
+              currentWizardData.tokenConfig.name,
+              currentWizardData.tokenConfig.symbol,
+              parseInt(currentWizardData.tokenConfig.decimals),
+              currentWizardData.tokenConfig.supply
+            ],
+            contractName: 'BurnMintERC677' // Adjust based on token type
+          })
+        });
+        
+        // Verify pool contract  
+        const poolVerificationPromise = fetch('/api/hardhat/verify-contract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            network: chainKey,
+            address: result.poolAddress,
+            constructorArgs: [result.tokenAddress], // Pool constructor args would need to be stored from deployment
+            contractName: currentWizardData.poolType === 'burnMint' ? 'BurnMintTokenPool' : 'LockReleaseTokenPool'
+          })
+        });
+        
+        // Execute verifications in parallel
+        const [tokenResponse, poolResponse] = await Promise.all([
+          tokenVerificationPromise,
+          poolVerificationPromise
+        ]);
+        
+        const tokenResult = await tokenResponse.json();
+        const poolResult = await poolResponse.json();
+        
+        // Update verification status based on results
+        const tokenStatus = tokenResult.success ? 'success' : 'error';
+        const poolStatus = poolResult.success ? 'success' : 'error';
+        
         currentVerificationData = {
           ...currentVerificationData,
           deploymentResults: {
@@ -1676,15 +1844,20 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
             [chainKey]: {
               ...currentVerificationData.deploymentResults[chainKey],
               verificationStatus: {
-                token: 'success',
-                pool: 'success'
+                token: tokenStatus,
+                pool: poolStatus
               }
             }
           }
         };
         
         setWizardData(currentVerificationData);
-        console.log(`✅ Verification complete for ${chainKey}`);
+        
+        if (tokenStatus === 'success' && poolStatus === 'success') {
+          console.log(`✅ Verification complete for ${chainKey}`);
+        } else {
+          console.log(`⚠️ Partial verification for ${chainKey}: token=${tokenStatus}, pool=${poolStatus}`);
+        }
         
       } catch (error) {
         console.error(`❌ Verification failed for ${chainKey}:`, error);
@@ -1712,6 +1885,11 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
     // Mark as completed after a brief delay
     setTimeout(() => {
       setCurrentPhase('completed');
+      // ADD THIS: Mark Step 6 as actually complete!
+      setWizardData(prev => ({
+        ...prev,
+        actualExecutionComplete: true
+      }));
     }, 1000);
   };
 
@@ -1901,6 +2079,9 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
   };
 
   const getDeploymentPhaseStatus = () => {
+    // If everything is complete, deployments were successful
+    if (wizardData.actualExecutionComplete) return 'success';
+    
     const results = Object.values(wizardData.deploymentResults);
     if (results.length === 0) return 'loading';
     if (results.some(r => r.status === 'error')) return 'error';
@@ -1909,8 +2090,47 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
   };
 
   const getConfigurationPhaseStatus = () => {
+    // If everything is complete, configuration was successful
+    if (wizardData.actualExecutionComplete) return 'success';
+    
+    // If currently configuring, show loading
     if (currentPhase === 'configuring') return 'loading';
-    if (currentPhase === 'completed') return 'success';
+    
+    // Check if configuration is actually complete by examining configurationStatus
+    const allChains = wizardData.selectedChains;
+    if (allChains.length >= 2) {
+      let totalConfigsNeeded = 0;
+      let completedConfigs = 0;
+      
+      for (const sourceChain of allChains) {
+        const result = wizardData.deploymentResults[sourceChain];
+        if (result?.status === 'success') {
+          for (const targetChain of allChains) {
+            if (sourceChain !== targetChain && result.configurationStatus) {
+              totalConfigsNeeded++;
+              if (result.configurationStatus[targetChain] === 'success') {
+                completedConfigs++;
+              }
+            }
+          }
+        }
+      }
+      
+      // If all configs are complete, return success
+      if (totalConfigsNeeded > 0 && completedConfigs === totalConfigsNeeded) {
+        return 'success';
+      }
+      
+      // If some configs are in progress, return loading
+      if (completedConfigs > 0 && completedConfigs < totalConfigsNeeded) {
+        return 'loading';
+      }
+    }
+    
+    // If deployments are successful but not configuring yet, show pending
+    const deploymentPhaseStatus = getDeploymentPhaseStatus();
+    if (deploymentPhaseStatus === 'success') return 'pending';
+    
     return 'pending';
   };
 
@@ -1939,6 +2159,17 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
 
   const deploymentPhaseStatus = getDeploymentPhaseStatus();
   const configurationPhaseStatus = getConfigurationPhaseStatus();
+
+  // Debug logging to understand the state
+  console.log('🔍 SimulateExecutionStep Debug:', {
+    currentPhase,
+    deploymentPhaseStatus,
+    configurationPhaseStatus,
+    actualExecutionComplete: wizardData.actualExecutionComplete,
+    deploymentResults: wizardData.deploymentResults
+  });
+
+  const showDeploymentComplete = currentPhase === 'completed' && getDeploymentPhaseStatus() === 'success' && wizardData.actualExecutionComplete;
 
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 sm:p-6 lg:p-8">
@@ -2203,8 +2434,8 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
                 </div>
               </div>
               
-              {/* Configuration Status */}
-              {result?.status === 'success' && totalTargets > 0 && (
+              {/* Configuration Status - only show if this deployment succeeded and no deployments failed */}
+              {result?.status === 'success' && totalTargets > 0 && !Object.values(wizardData.deploymentResults).some(r => r.status === 'error') && (
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700">Configuration</span>
@@ -2302,7 +2533,7 @@ export function SimulateExecutionStep({ wizardData, setWizardData }: SimulateExe
         })}
       </div>
 
-      {currentPhase === 'completed' && (
+      {showDeploymentComplete && (
         <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-200">
           <div className="text-center">
             <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">

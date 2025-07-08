@@ -9,10 +9,10 @@ forkedNetworks:
       symbol: "ETH"
       decimals: 18
     rpcUrls:
-      - "http://127.0.0.1:61112"
+      - "http://127.0.0.1:57360"
     blockExplorer:
       name: "blockscout"
-      apiURL: "http://127.0.0.1:61285/api"
+      apiURL: "http://127.0.0.1:57534/api"
       url: "http://127.0.0.1:3333"
       apiKey: "api-key"
       logoURL: "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/ethereum.svg?auto=compress%2Cformat"
@@ -30,10 +30,10 @@ forkedNetworks:
       symbol: "ETH"
       decimals: 18
     rpcUrls:
-      - "http://127.0.0.1:61847"
+      - "http://127.0.0.1:63225"
     blockExplorer:
       name: "blockscout"
-      apiURL: "http://127.0.0.1:62010/api"
+      apiURL: "http://127.0.0.1:63433/api"
       url: "http://127.0.0.1:3334"
       apiKey: "api-key"
       logoURL: "https://d2f70xi62kby8n.cloudfront.net/bridge/icons/networks/ethereum.svg?auto=compress%2Cformat"
