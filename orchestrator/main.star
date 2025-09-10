@@ -6,7 +6,7 @@ POSTGRES_MAX_MEMORY = 1024
 def run(plan, args):
     env = args.get("env", "dev")
     
-    ethereum = import_module("github.com/LZeroAnalytics/ethereum-package@{}/main.star".format(env))
+    ethereum = import_module("github.com/0xBloctopus/ethereum-package@{}/main.star".format(env))
     postgres = import_module("github.com/tiljrd/postgres-package@{}/main.star".format(env))
 
     blockscout_port = 3333
